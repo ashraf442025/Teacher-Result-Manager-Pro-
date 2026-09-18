@@ -1,17 +1,18 @@
 [app]
 
-# ============================================================
+# ================================================================
 # TEACHER RESULT MANAGER PRO
-# ============================================================
+# Android / Pydroid 3 / GitHub Actions
+# ================================================================
 
 # (str) Title of your application
 title = Teacher Result Manager Pro
 
 # (str) Package name
-package.name = teacherresultmanager
+package.name = teacherresultmanagerpro
 
 # (str) Package domain
-package.domain = org.teacherresultmanager
+package.domain = org.teacherresultmanagerpro
 
 # (str) Source code directory
 source.dir = .
@@ -19,164 +20,144 @@ source.dir = .
 # (str) Main Python file
 source.main = main.py
 
-# (list) Source files to include
-source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,xml
-
-# (list) Source files to exclude
-# source.exclude_exts =
-
-# (list) Directories to exclude
-# source.exclude_dirs = tests, bin, .buildozer
-
 # (str) Application version
 version = 1.0.0
 
 # (str) Application requirements
-requirements = python3,kivy,kivymd,pyjnius,reportlab,pillow
+requirements = python3,kivy,pyjnius,reportlab
 
-# (str) Orientation
+# (str) Supported orientation
 orientation = portrait
 
-# (bool) Fullscreen
-fullscreen = 0
+# (list) Source file extensions
+source.include_exts = py,kv,png,jpg,jpeg,gif,ttf,otf,db,txt,pdf
 
+# (list) Source include patterns
+source.include_patterns = student_photos/*,fonts/*
 
-# ============================================================
-# ANDROID
-# ============================================================
-
-# Target Android API
-android.api = 36
-
-# Minimum Android API
-android.minapi = 24
-
-# Android NDK
-android.ndk = 28c
-
-# Android architectures
-android.archs = arm64-v8a,armeabi-v7a
-
-# Accept Android SDK license
-android.accept_sdk_license = True
-
-# Android application backup
-android.allow_backup = True
-
-# Debug APK
-android.debug_artifact = apk
-
-# Release artifact
-android.release_artifact = aab
-
-
-# ============================================================
-# ANDROID PERMISSIONS
-# ============================================================
-
-android.permissions = INTERNET
-
-
-# ============================================================
-# ANDROIDX
-# ============================================================
-
-android.enable_androidx = True
-
-
-# ============================================================
-# PYTHON-FOR-ANDROID
-# ============================================================
-
-# Use Kivy's python-for-android
-p4a.fork = kivy
-
-# Current development branch
-p4a.branch = develop
-
-# SDL2 bootstrap for Kivy
-p4a.bootstrap = sdl2
-
-
-# ============================================================
-# JAVA / GRADLE
-# ============================================================
-
-# Java 17 is used by GitHub Actions
-# java version is controlled from build-apk.yml
-
-
-# ============================================================
-# PRESPLASH
-# ============================================================
-
-# presplash.filename = %(source.dir)s/data/presplash.png
-# android.presplash_color = #FFFFFF
-
-
-# ============================================================
-# ICON
-# ============================================================
-
-# If you later add an icon:
+# (str) Application icon
+# Keep empty unless icon.png exists
 # icon.filename = %(source.dir)s/icon.png
 
-
-# ============================================================
-# ANDROID LOGCAT
-# ============================================================
-
-# android.logcat_filters = *:S python:D
+# (str) Presplash
+# Keep disabled for maximum compatibility
+# presplash.filename = %(source.dir)s/presplash.png
 
 
-# ============================================================
-# ANDROID IMMERSIVE MODE
-# ============================================================
+# ================================================================
+# ANDROID
+# ================================================================
 
-android.immersive_mode = False
+# (str) Android API target
+android.api = 35
+
+# (str) Minimum Android API
+android.minapi = 21
+
+# (str) Android NDK version
+android.ndk = 25b
+
+# (str) Android NDK API
+android.ndk_api = 21
+
+# (str) Android architectures
+android.archs = arm64-v8a, armeabi-v7a
+
+# (bool) Android accept SDK licenses
+android.accept_sdk_license = True
+
+# (str) Android entry point
+android.entrypoint = org.kivy.android.PythonActivity
+
+# (str) Android app theme
+android.apptheme = @android:style/Theme.Material.Light.NoActionBar
+
+# (bool) Android backup
+android.allow_backup = True
+
+# (str) Android permissions
+android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
 
 
-# ============================================================
-# ANDROID META DATA
-# ============================================================
+# ================================================================
+# PYTHON FOR ANDROID
+# ================================================================
 
-# android.meta_data =
+# Use standard SDL2 bootstrap for Kivy
+p4a.bootstrap = sdl2
 
+# Do NOT force a GitHub fork/branch here.
+# This avoids unnecessary external p4a source problems.
 
-# ============================================================
-# ANDROID FEATURES
-# ============================================================
-
-# android.features =
-
-
-# ============================================================
-# GOOGLE PLAY / APP BUNDLE
-# ============================================================
-
-# Release builds can generate AAB.
-# Debug builds generate APK.
+# p4a.fork =
+# p4a.branch =
 
 
-# ============================================================
-# PYTHON-FOR-ANDROID EXTRA ARGUMENTS
-# ============================================================
+# ================================================================
+# LOGCAT / DEBUG
+# ================================================================
 
+# (bool) Show Android logcat during debug
+android.logcat_filters = *:S python:D
+
+
+# ================================================================
+# WINDOWS / DESKTOP
+# ================================================================
+
+# No special settings required.
+
+
+# ================================================================
+# BUILD SETTINGS
+# ================================================================
+
+# (str) Python-for-Android extra arguments
+# Keep this empty.
 # p4a.extra_args =
 
 
-# ============================================================
-# BUILD OPTIONS
-# ============================================================
+# ================================================================
+# PRESPLASH
+# ================================================================
 
-# android.copy_libs = 1
+# (int) Presplash background color
+presplash.color = #FFFFFF
 
-# android.no-byte-compile-python = False
+
+# ================================================================
+# FILES / ASSETS
+# ================================================================
+
+# Additional files are already handled by source.include_exts
+# and source.include_patterns.
 
 
-# ============================================================
-# OUTPUT
-# ============================================================
+# ================================================================
+# ADVANCED
+# ================================================================
 
-# Debug APK will be generated in:
-# bin/
+# (str) Android additional arguments
+# android.add_src =
+
+# (str) Android additional libraries
+# android.add_libs_armeabi_v7a =
+
+# android.add_libs_arm64_v8a =
+
+# (str) Android whitelist
+# android.whitelist_src =
+
+# (str) Android blacklist
+# android.blacklist_src =
+
+# (str) Python-for-Android whitelist
+# p4a.whitelist_src =
+
+# (str) Python-for-Android blacklist
+# p4a.blacklist_src =
+
+
+# ================================================================
+# END
+# ================================================================
