@@ -1,10 +1,14 @@
 [app]
 
+# ============================================================
+# TEACHER RESULT MANAGER PRO
+# ============================================================
+
 # (str) Title of your application
 title = Teacher Result Manager Pro
 
 # (str) Package name
-package.name = teacherresultmanagerpro
+package.name = teacherresultmanager
 
 # (str) Package domain
 package.domain = org.teacherresultmanager
@@ -12,180 +16,174 @@ package.domain = org.teacherresultmanager
 # (str) Source code directory
 source.dir = .
 
+# (str) Main Python file
+source.main = main.py
+
 # (list) Source files to include
-source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,db
+source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,xml
 
-# (list) Source exclude patterns
-source.exclude_exts = pyc,pyo
+# (list) Source files to exclude
+# source.exclude_exts =
 
-# (list) List of inclusions using pattern matching
-# source.include_patterns = assets/*,images/*
+# (list) Directories to exclude
+# source.exclude_dirs = tests, bin, .buildozer
 
 # (str) Application version
 version = 1.0.0
 
+# (str) Application requirements
+requirements = python3,kivy,kivymd,pyjnius,reportlab,pillow
 
-# ----------------------------------------------------------------
-# REQUIREMENTS
-# ----------------------------------------------------------------
-
-# (list) Python modules required by the application
-requirements = python3,kivy,pyjnius,reportlab
-
-
-# ----------------------------------------------------------------
-# ORIENTATION
-# ----------------------------------------------------------------
-
-# (str) Supported orientation (one of landscape, sensorLandscape,
-# portrait or sensorPortrait)
+# (str) Orientation
 orientation = portrait
 
-
-# ----------------------------------------------------------------
-# ICON
-# ----------------------------------------------------------------
-
-# (str) Presplash of the application
-# presplash.filename = %(source.dir)s/data/presplash.png
-
-# (str) Icon of the application
-# icon.filename = %(source.dir)s/data/icon.png
-
-
-# ----------------------------------------------------------------
-# ANDROID
-# ----------------------------------------------------------------
-
-# (bool) Indicate if the application should be fullscreen or not
+# (bool) Fullscreen
 fullscreen = 0
 
-# (str) Android entry point
-android.entrypoint = org.kivy.android.PythonActivity
 
-# (str) Android app theme
-android.apptheme = @android:style/Theme.Material.Light.NoActionBar
+# ============================================================
+# ANDROID
+# ============================================================
 
-# (str) Android API to use
-android.api = 35
+# Target Android API
+android.api = 36
 
-# (str) Minimum API required
-android.minapi = 23
+# Minimum Android API
+android.minapi = 24
 
-# (str) Android NDK version
-android.ndk = 27c
+# Android NDK
+android.ndk = 28c
 
-# (str) Android architecture
+# Android architectures
 android.archs = arm64-v8a,armeabi-v7a
 
-# (bool) Android accept SDK license
+# Accept Android SDK license
 android.accept_sdk_license = True
 
-# (str) Android permissions
+# Android application backup
+android.allow_backup = True
+
+# Debug APK
+android.debug_artifact = apk
+
+# Release artifact
+android.release_artifact = aab
+
+
+# ============================================================
+# ANDROID PERMISSIONS
+# ============================================================
+
 android.permissions = INTERNET
 
-# (str) Android application activity orientation
-android.orientation = portrait
 
-# (bool) Enable Android backup
+# ============================================================
+# ANDROIDX
+# ============================================================
+
+android.enable_androidx = True
+
+
+# ============================================================
+# PYTHON-FOR-ANDROID
+# ============================================================
+
+# Use Kivy's python-for-android
+p4a.fork = kivy
+
+# Current development branch
+p4a.branch = develop
+
+# SDL2 bootstrap for Kivy
+p4a.bootstrap = sdl2
+
+
+# ============================================================
+# JAVA / GRADLE
+# ============================================================
+
+# Java 17 is used by GitHub Actions
+# java version is controlled from build-apk.yml
+
+
+# ============================================================
+# PRESPLASH
+# ============================================================
+
+# presplash.filename = %(source.dir)s/data/presplash.png
+# android.presplash_color = #FFFFFF
+
+
+# ============================================================
+# ICON
+# ============================================================
+
+# If you later add an icon:
+# icon.filename = %(source.dir)s/icon.png
+
+
+# ============================================================
+# ANDROID BACKUP
+# ============================================================
+
 android.allow_backup = True
 
 
-# ----------------------------------------------------------------
-# ANDROID META-DATA
-# ----------------------------------------------------------------
+# ============================================================
+# ANDROID LOGCAT
+# ============================================================
 
-# (str) Android app label
-android.add_src =
-
-
-# ----------------------------------------------------------------
-# JAVA / GRADLE
-# ----------------------------------------------------------------
-
-# (str) Gradle version
-# Leave blank so Buildozer/p4a selects the compatible version
-
-# android.gradle_dependencies =
-
-# (str) Android private storage
-android.private_storage = True
+# android.logcat_filters = *:S python:D
 
 
-# ----------------------------------------------------------------
-# LOGGING
-# ----------------------------------------------------------------
+# ============================================================
+# ANDROID IMMERSIVE MODE
+# ============================================================
 
-# (str) Log level
-log_level = 2
-
-# (bool) Warn on unsupported requirements
-warn_on_root = 1
+android.immersive_mode = False
 
 
-# ----------------------------------------------------------------
-# BUILD OPTIONS
-# ----------------------------------------------------------------
+# ============================================================
+# ANDROID META DATA
+# ============================================================
 
-# (str) Build mode
-# debug or release
-android.debug = 1
-
-# (str) Android build tools version
-# Leave empty for automatic selection
-# android.build_tools_version =
+# android.meta_data =
 
 
-# ----------------------------------------------------------------
-# P4A OPTIONS
-# ----------------------------------------------------------------
+# ============================================================
+# ANDROID FEATURES
+# ============================================================
 
-# (str) Python-for-Android extra arguments
+# android.features =
+
+
+# ============================================================
+# GOOGLE PLAY / APP BUNDLE
+# ============================================================
+
+# Release builds can generate AAB.
+# Debug builds generate APK.
+
+
+# ============================================================
+# PYTHON-FOR-ANDROID EXTRA ARGUMENTS
+# ============================================================
+
 # p4a.extra_args =
 
 
-# ----------------------------------------------------------------
-# PRESPLASH
-# ----------------------------------------------------------------
+# ============================================================
+# BUILD OPTIONS
+# ============================================================
 
-# (int) Presplash background color
-# presplash.color = #FFFFFF
+# android.copy_libs = 1
 
-
-# ----------------------------------------------------------------
-# WINDOWS / DESKTOP
-# ----------------------------------------------------------------
-
-# No special desktop settings required.
+# android.no-byte-compile-python = False
 
 
-# ----------------------------------------------------------------
-# ADVANCED
-# ----------------------------------------------------------------
-
-# (bool) Android fullscreen immersive mode
-android.immersive_mode = False
-
-# (str) Android backup rules
-# android.backup_rules =
-
-# (str) Android manifest additions
-# android.add_manifest_xml =
-
-
-# ----------------------------------------------------------------
+# ============================================================
 # OUTPUT
-# ----------------------------------------------------------------
+# ============================================================
 
-# APK will normally be generated inside:
+# Debug APK will be generated in:
 # bin/
-
-
-# ----------------------------------------------------------------
-# USER DATA
-# ----------------------------------------------------------------
-
-# The application will use its Android private storage for:
-# teacher_result_manager.db
-# student_photos/
-# PDF files/
