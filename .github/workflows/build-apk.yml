@@ -2,62 +2,182 @@ name: Build Android APK
 
 on:
   workflow_dispatch:
+
   push:
     branches:
       - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-apk:
+
+    name: Teacher Result Manager Pro APK
+
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout
+
+      # ============================================================
+      # 1. CHECKOUT SOURCE CODE
+      # ============================================================
+
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
 
-      - name: Set up Java
-        uses: actions/setup-java@v6
+      # ============================================================
+      # 2. SETUP PYTHON
+      # ============================================================
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+
+      # ============================================================
+      # 3. SETUP JAVA 17
+      # ============================================================
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-      - name: Install system dependencies
+
+      # ============================================================
+      # 4. INSTALL LINUX BUILD DEPENDENCIES
+      # ============================================================
+
+      - name: Install Build Dependencies
         run: |
-          sudo apt update
-          sudo apt install -y \
+          sudo apt-get update
+
+          sudo apt-get install -y \
             git \
             zip \
             unzip \
             openjdk-17-jdk \
+            python3-pip \
             autoconf \
             automake \
             libtool \
             pkg-config \
             zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
             libffi-dev \
-            libssl-dev \
-            cmake
+            libssl-dev
+
+
+      # ============================================================
+      # 5. UPGRADE PYTHON BUILD TOOLS
+      # ============================================================
+
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools wheel
+
+
+      # ============================================================
+      # 6. INSTALL CYTHON
+      # ============================================================
+
+      - name: Install Cython
+        run: |
+          python -m pip install "Cython==0.29.34"
+
+
+      # ============================================================
+      # 7. INSTALL BUILDOZER
+      # ============================================================
 
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade pip
-          pip install buildozer
-          pip install cython==0.29.34
+          python -m pip install --upgrade buildozer
 
-      - name: Prepare Buildozer
-        run: |
-          sed -i 's/^# *p4a.branch = master/p4a.branch = master/' buildozer.spec || true
 
-      - name: Build APK
+      # ============================================================
+      # 8. CHECK PROJECT FILES
+      # ============================================================
+
+      - name: Check Project
         run: |
-          buildozer android debug
+          echo "=========================================="
+          echo "Teacher Result Manager Pro"
+          echo "=========================================="
+
+          echo ""
+          echo "Project files:"
+          ls -la
+
+          echo ""
+          echo "Main Python file:"
+          test -f main.py
+
+          echo ""
+          echo "Buildozer spec:"
+          test -f buildozer.spec
+
+          echo ""
+          echo "Python version:"
+          python --version
+
+          echo ""
+          echo "Java version:"
+          java -version
+
+
+      # ============================================================
+      # 9. CLEAN OLD BUILD
+      # ============================================================
+
+      - name: Clean Build
+        run: |
+          rm -rf .buildozer
+          rm -rf bin
+
+
+      # ============================================================
+      # 10. BUILD APK
+      # ============================================================
+
+      - name: Build Debug APK
+        env:
+          PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
+          PIP_NO_INPUT: "1"
+
+        run: |
+          buildozer -v android debug
+
+
+      # ============================================================
+      # 11. SHOW APK
+      # ============================================================
+
+      - name: Find APK
+        run: |
+          echo "=========================================="
+          echo "BUILD OUTPUT"
+          echo "=========================================="
+
+          ls -lh bin/
+
+          echo ""
+          echo "APK files:"
+          find bin -type f -name "*.apk" -print
+
+
+      # ============================================================
+      # 12. UPLOAD APK
+      # ============================================================
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Teacher-Result-Manager-Pro-APK
           path: bin/*.apk
+          if-no-files-found: error
