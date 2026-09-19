@@ -10,16 +10,16 @@ jobs:
 
     steps:
 
-      # --------------------------------------------------------
+      # ========================================================
       # CHECKOUT
-      # --------------------------------------------------------
+      # ========================================================
       - name: Checkout source code
         uses: actions/checkout@v4
 
 
-      # --------------------------------------------------------
+      # ========================================================
       # JAVA 17
-      # --------------------------------------------------------
+      # ========================================================
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
@@ -27,18 +27,18 @@ jobs:
           java-version: '17'
 
 
-      # --------------------------------------------------------
+      # ========================================================
       # PYTHON 3.11
-      # --------------------------------------------------------
+      # ========================================================
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
 
-      # --------------------------------------------------------
+      # ========================================================
       # SYSTEM DEPENDENCIES
-      # --------------------------------------------------------
+      # ========================================================
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -61,9 +61,9 @@ jobs:
             ccache
 
 
-      # --------------------------------------------------------
+      # ========================================================
       # PYTHON BUILD TOOLS
-      # --------------------------------------------------------
+      # ========================================================
       - name: Install Python build tools
         run: |
           python -m pip install --upgrade pip
@@ -71,30 +71,27 @@ jobs:
           python -m pip install --upgrade cython==0.29.37
 
 
-      # --------------------------------------------------------
-      # BUILDOZER
-      # --------------------------------------------------------
+      # ========================================================
+      # INSTALL BUILDOZER
+      # ========================================================
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade buildozer
 
 
-      # --------------------------------------------------------
-      # VERIFY PROJECT FILES
-      # --------------------------------------------------------
+      # ========================================================
+      # VERIFY PROJECT
+      # ========================================================
       - name: Verify project files
         run: |
           echo "========================================"
-          echo "PROJECT FILES"
+          echo "PROJECT"
           echo "========================================"
 
           pwd
           ls -la
 
-          echo "Checking main.py..."
           test -f main.py
-
-          echo "Checking buildozer.spec..."
           test -f buildozer.spec
 
           echo "main.py:"
@@ -104,48 +101,110 @@ jobs:
           wc -c buildozer.spec
 
 
-      # --------------------------------------------------------
-      # BUILDOZER VERSION
-      # --------------------------------------------------------
+      # ========================================================
+      # CHECK BUILDOZER
+      # ========================================================
       - name: Check Buildozer
         run: |
           buildozer --version
 
 
-      # --------------------------------------------------------
-      # CLEAN OLD BUILD
-      # --------------------------------------------------------
-      - name: Clean previous build
+      # ========================================================
+      # INITIALIZE PYTHON-FOR-ANDROID
+      #
+      # This makes Buildozer download/setup p4a first.
+      # ========================================================
+      - name: Initialize python-for-android
         run: |
-          rm -rf .buildozer
+          buildozer android p4a -- --help
+
+
+      # ========================================================
+      # REMOVE BROKEN REPORTLAB RECIPE
+      #
+      # The current p4a ReportLab recipe points to the old
+      # hg.reportlab.com source which returns HTTP 403.
+      #
+      # Removing the recipe allows ReportLab to be handled
+      # through the normal Python package installation path.
+      # ========================================================
+      - name: Work around ReportLab recipe 403
+        run: |
+          P4A_DIR=".buildozer/android/platform/python-for-android"
+
+          echo "Python-for-Android directory:"
+          echo "$P4A_DIR"
+
+          if [ -d "$P4A_DIR/pythonforandroid/recipes/reportlab" ]; then
+            echo "Removing ReportLab recipe..."
+            rm -rf "$P4A_DIR/pythonforandroid/recipes/reportlab"
+          else
+            echo "ReportLab recipe directory not found."
+          fi
+
+          echo "Checking ReportLab recipe:"
+          if [ -d "$P4A_DIR/pythonforandroid/recipes/reportlab" ]; then
+            echo "ERROR: ReportLab recipe still exists."
+            exit 1
+          else
+            echo "ReportLab recipe successfully removed."
+          fi
+
+
+      # ========================================================
+      # CLEAN APPLICATION BUILD
+      #
+      # Do NOT delete the p4a directory here because the
+      # ReportLab workaround above modifies it.
+      # ========================================================
+      - name: Clean application build
+        run: |
           rm -rf bin
 
+          rm -rf .buildozer/android/platform/build-arm64-v8a_armeabi-v7a
 
-      # --------------------------------------------------------
-      # BUILD APK
-      # --------------------------------------------------------
+          echo "Clean complete."
+
+
+      # ========================================================
+      # BUILD DEBUG APK
+      # ========================================================
       - name: Build Debug APK
         run: |
           buildozer -v android debug
 
 
-      # --------------------------------------------------------
+      # ========================================================
       # CHECK APK
-      # --------------------------------------------------------
+      # ========================================================
       - name: Check APK output
         run: |
           echo "========================================"
           echo "APK OUTPUT"
           echo "========================================"
 
+          if [ ! -d bin ]; then
+            echo "ERROR: bin directory was not created."
+            exit 1
+          fi
+
           ls -lah bin/
+
+          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+
+          echo "APK COUNT: $APK_COUNT"
+
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "ERROR: No APK was created."
+            exit 1
+          fi
 
           find bin -maxdepth 1 -type f -name "*.apk" -print
 
 
-      # --------------------------------------------------------
+      # ========================================================
       # UPLOAD APK
-      # --------------------------------------------------------
+      # ========================================================
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
