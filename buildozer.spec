@@ -72,8 +72,6 @@ android.entrypoint = org.kivy.android.PythonActivity
 # (str) Android app theme
 android.apptheme = @android:style/Theme.Material.Light.NoActionBar
 
-# (bool) Android backup
-android.allow_backup = True
 
 # (str) Android permissions
 android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
