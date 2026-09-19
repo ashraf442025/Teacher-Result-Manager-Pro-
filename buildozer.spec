@@ -1,161 +1,100 @@
 [app]
 
-# ================================================================
+# ============================================================
 # TEACHER RESULT MANAGER PRO
-# Android / Pydroid 3 / GitHub Actions
-# ================================================================
+# ============================================================
 
-# (str) Title of your application
 title = Teacher Result Manager Pro
 
-# (str) Package name
-package.name = teacherresultmanagerpro
+package.name = teacherresultmanager
 
-# (str) Package domain
-package.domain = org.teacherresultmanagerpro
+package.domain = org.teacherresultmanager
 
-# (str) Source code directory
 source.dir = .
 
-# (str) Main Python file
 source.main = main.py
 
-# (str) Application version
+source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,xml
+
 version = 1.0.0
 
-# (str) Application requirements
-requirements = python3,kivy,pyjnius,reportlab
+requirements = python3,kivy,kivymd,pyjnius,reportlab,pillow
 
-# (str) Supported orientation
 orientation = portrait
 
-# (list) Source file extensions
-source.include_exts = py,kv,png,jpg,jpeg,gif,ttf,otf,db,txt,pdf
-
-# (list) Source include patterns
-source.include_patterns = student_photos/*,fonts/*
-
-# (str) Application icon
-# Keep empty unless icon.png exists
-# icon.filename = %(source.dir)s/icon.png
-
-# (str) Presplash
-# Keep disabled for maximum compatibility
-# presplash.filename = %(source.dir)s/presplash.png
+fullscreen = 0
 
 
-# ================================================================
+# ============================================================
 # ANDROID
-# ================================================================
+# ============================================================
 
-# (str) Android API target
-android.api = 35
+android.api = 36
 
-# (str) Minimum Android API
-android.minapi = 21
+android.minapi = 24
 
-# (str) Android NDK version
-android.ndk = 25b
+android.ndk = 28c
 
-# (str) Android NDK API
-android.ndk_api = 21
+android.archs = arm64-v8a,armeabi-v7a
 
-# (str) Android architectures
-android.archs = arm64-v8a, armeabi-v7a
-
-# (bool) Android accept SDK licenses
 android.accept_sdk_license = True
 
-# (str) Android entry point
-android.entrypoint = org.kivy.android.PythonActivity
+android.allow_backup = True
 
-# (str) Android app theme
-android.apptheme = @android:style/Theme.Material.Light.NoActionBar
+android.debug_artifact = apk
 
-
-# (str) Android permissions
-android.permissions = READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+android.release_artifact = aab
 
 
-# ================================================================
-# PYTHON FOR ANDROID
-# ================================================================
+# ============================================================
+# ANDROID PERMISSIONS
+# ============================================================
 
-# Use standard SDL2 bootstrap for Kivy
+android.permissions = INTERNET
+
+
+# ============================================================
+# ANDROIDX
+# ============================================================
+
+android.enable_androidx = True
+
+
+# ============================================================
+# PYTHON-FOR-ANDROID
+# ============================================================
+
+p4a.fork = kivy
+
+p4a.branch = develop
+
 p4a.bootstrap = sdl2
 
-# Do NOT force a GitHub fork/branch here.
-# This avoids unnecessary external p4a source problems.
 
-# p4a.fork =
-# p4a.branch =
+# ============================================================
+# ANDROID IMMERSIVE MODE
+# ============================================================
 
-
-# ================================================================
-# LOGCAT / DEBUG
-# ================================================================
-
-# (bool) Show Android logcat during debug
-android.logcat_filters = *:S python:D
+android.immersive_mode = False
 
 
-# ================================================================
-# WINDOWS / DESKTOP
-# ================================================================
+# ============================================================
+# BUILD OPTIONS
+# ============================================================
 
-# No special settings required.
-
-
-# ================================================================
-# BUILD SETTINGS
-# ================================================================
-
-# (str) Python-for-Android extra arguments
-# Keep this empty.
 # p4a.extra_args =
 
 
-# ================================================================
-# PRESPLASH
-# ================================================================
+# ============================================================
+# ICON
+# ============================================================
 
-# (int) Presplash background color
-presplash.color = #FFFFFF
-
-
-# ================================================================
-# FILES / ASSETS
-# ================================================================
-
-# Additional files are already handled by source.include_exts
-# and source.include_patterns.
+# icon.filename = %(source.dir)s/icon.png
 
 
-# ================================================================
-# ADVANCED
-# ================================================================
+# ============================================================
+# PRE-SPLASH
+# ============================================================
 
-# (str) Android additional arguments
-# android.add_src =
-
-# (str) Android additional libraries
-# android.add_libs_armeabi_v7a =
-
-# android.add_libs_arm64_v8a =
-
-# (str) Android whitelist
-# android.whitelist_src =
-
-# (str) Android blacklist
-# android.blacklist_src =
-
-# (str) Python-for-Android whitelist
-# p4a.whitelist_src =
-
-# (str) Python-for-Android blacklist
-# p4a.blacklist_src =
-
-
-# ================================================================
-# END
-# ================================================================
+# presplash.filename = %(source.dir)s/presplash.png
+# android.presplash_color = #FFFFFF
