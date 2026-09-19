@@ -1,55 +1,47 @@
-name: Build Android APK
+name: Build Teacher Result Manager Pro APK
 
 on:
   workflow_dispatch:
 
-  push:
-    branches:
-      - main
-
 jobs:
-  build-apk:
-
-    name: Teacher Result Manager Pro APK
-
+  build:
+    name: Build Android APK
     runs-on: ubuntu-22.04
 
     steps:
 
-      # ============================================================
-      # 1. CHECKOUT SOURCE CODE
-      # ============================================================
-
-      - name: Checkout Repository
+      # --------------------------------------------------------
+      # CHECKOUT
+      # --------------------------------------------------------
+      - name: Checkout source code
         uses: actions/checkout@v4
 
 
-      # ============================================================
-      # 2. SETUP PYTHON
-      # ============================================================
-
-      - name: Setup Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.10"
-
-
-      # ============================================================
-      # 3. SETUP JAVA 17
-      # ============================================================
-
-      - name: Setup Java 17
+      # --------------------------------------------------------
+      # JAVA 17
+      # --------------------------------------------------------
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: '17'
+          cache: gradle
 
 
-      # ============================================================
-      # 4. INSTALL LINUX BUILD DEPENDENCIES
-      # ============================================================
+      # --------------------------------------------------------
+      # PYTHON 3.11
+      # --------------------------------------------------------
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
 
-      - name: Install Build Dependencies
+
+      # --------------------------------------------------------
+      # SYSTEM DEPENDENCIES
+      # --------------------------------------------------------
+      - name: Install system dependencies
         run: |
           sudo apt-get update
 
@@ -57,124 +49,107 @@ jobs:
             git \
             zip \
             unzip \
-            openjdk-17-jdk \
-            python3-pip \
             autoconf \
             automake \
+            autopoint \
             libtool \
             pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo5 \
             cmake \
+            build-essential \
+            libltdl-dev \
             libffi-dev \
-            libssl-dev
+            libssl-dev \
+            gettext \
+            ccache
 
 
-      # ============================================================
-      # 5. UPGRADE PYTHON BUILD TOOLS
-      # ============================================================
-
-      - name: Upgrade pip
+      # --------------------------------------------------------
+      # PYTHON BUILD TOOLS
+      # --------------------------------------------------------
+      - name: Install Python build tools
         run: |
           python -m pip install --upgrade pip
           python -m pip install --upgrade setuptools wheel
+          python -m pip install --upgrade cython==0.29.37
 
 
-      # ============================================================
-      # 6. INSTALL CYTHON
-      # ============================================================
-
-      - name: Install Cython
-        run: |
-          python -m pip install "Cython==0.29.34"
-
-
-      # ============================================================
-      # 7. INSTALL BUILDOZER
-      # ============================================================
-
+      # --------------------------------------------------------
+      # BUILDOZER
+      # --------------------------------------------------------
       - name: Install Buildozer
         run: |
           python -m pip install --upgrade buildozer
 
 
-      # ============================================================
-      # 8. CHECK PROJECT FILES
-      # ============================================================
-
-      - name: Check Project
+      # --------------------------------------------------------
+      # VERIFY FILES
+      # --------------------------------------------------------
+      - name: Verify project files
         run: |
-          echo "=========================================="
-          echo "Teacher Result Manager Pro"
-          echo "=========================================="
+          echo "========================================"
+          echo "PROJECT FILES"
+          echo "========================================"
 
-          echo ""
-          echo "Project files:"
+          pwd
+
+          echo "--- Root directory ---"
           ls -la
 
-          echo ""
-          echo "Main Python file:"
+          echo "--- main.py ---"
           test -f main.py
 
-          echo ""
-          echo "Buildozer spec:"
+          echo "--- buildozer.spec ---"
           test -f buildozer.spec
 
-          echo ""
-          echo "Python version:"
-          python --version
+          echo "--- main.py size ---"
+          wc -c main.py
 
-          echo ""
-          echo "Java version:"
-          java -version
+          echo "--- buildozer.spec size ---"
+          wc -c buildozer.spec
 
 
-      # ============================================================
-      # 9. CLEAN OLD BUILD
-      # ============================================================
+      # --------------------------------------------------------
+      # SHOW BUILDOZER VERSION
+      # --------------------------------------------------------
+      - name: Check Buildozer
+        run: |
+          buildozer --version
 
-      - name: Clean Build
+
+      # --------------------------------------------------------
+      # CLEAN OLD BUILDS
+      # --------------------------------------------------------
+      - name: Clean Buildozer
         run: |
           rm -rf .buildozer
           rm -rf bin
 
 
-      # ============================================================
-      # 10. BUILD APK
-      # ============================================================
-
+      # --------------------------------------------------------
+      # BUILD APK
+      # --------------------------------------------------------
       - name: Build Debug APK
-        env:
-          PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
-          PIP_NO_INPUT: "1"
-
         run: |
           buildozer -v android debug
 
 
-      # ============================================================
-      # 11. SHOW APK
-      # ============================================================
-
-      - name: Find APK
+      # --------------------------------------------------------
+      # CHECK APK
+      # --------------------------------------------------------
+      - name: Check APK output
         run: |
-          echo "=========================================="
-          echo "BUILD OUTPUT"
-          echo "=========================================="
+          echo "========================================"
+          echo "APK OUTPUT"
+          echo "========================================"
 
-          ls -lh bin/
+          ls -lah bin/
 
-          echo ""
-          echo "APK files:"
-          find bin -type f -name "*.apk" -print
+          test -n "$(find bin -maxdepth 1 -type f -name '*.apk' -print -quit)"
 
 
-      # ============================================================
-      # 12. UPLOAD APK
-      # ============================================================
-
+      # --------------------------------------------------------
+      # UPLOAD APK
+      # --------------------------------------------------------
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
