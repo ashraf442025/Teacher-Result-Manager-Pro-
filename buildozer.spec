@@ -65,8 +65,7 @@ android.enable_androidx = True
 # ============================================================
 
 p4a.fork = kivy
-
-p4a.branch = develop
+p4a.branch = master
 
 p4a.bootstrap = sdl2
 
