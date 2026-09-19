@@ -21,11 +21,10 @@ jobs:
       # JAVA 17
       # --------------------------------------------------------
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
-          cache: gradle
 
 
       # --------------------------------------------------------
@@ -82,7 +81,7 @@ jobs:
 
 
       # --------------------------------------------------------
-      # VERIFY FILES
+      # VERIFY PROJECT
       # --------------------------------------------------------
       - name: Verify project files
         run: |
@@ -91,25 +90,23 @@ jobs:
           echo "========================================"
 
           pwd
-
-          echo "--- Root directory ---"
           ls -la
 
-          echo "--- main.py ---"
+          echo "Checking main.py..."
           test -f main.py
 
-          echo "--- buildozer.spec ---"
+          echo "Checking buildozer.spec..."
           test -f buildozer.spec
 
-          echo "--- main.py size ---"
+          echo "main.py:"
           wc -c main.py
 
-          echo "--- buildozer.spec size ---"
+          echo "buildozer.spec:"
           wc -c buildozer.spec
 
 
       # --------------------------------------------------------
-      # SHOW BUILDOZER VERSION
+      # BUILDOZER VERSION
       # --------------------------------------------------------
       - name: Check Buildozer
         run: |
@@ -117,9 +114,9 @@ jobs:
 
 
       # --------------------------------------------------------
-      # CLEAN OLD BUILDS
+      # CLEAN PREVIOUS BUILD
       # --------------------------------------------------------
-      - name: Clean Buildozer
+      - name: Clean previous build
         run: |
           rm -rf .buildozer
           rm -rf bin
@@ -144,7 +141,7 @@ jobs:
 
           ls -lah bin/
 
-          test -n "$(find bin -maxdepth 1 -type f -name '*.apk' -print -quit)"
+          find bin -maxdepth 1 -type f -name "*.apk" -print
 
 
       # --------------------------------------------------------
