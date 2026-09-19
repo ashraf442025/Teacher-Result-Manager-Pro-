@@ -34,7 +34,6 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-          cache: pip
 
 
       # --------------------------------------------------------
@@ -81,7 +80,7 @@ jobs:
 
 
       # --------------------------------------------------------
-      # VERIFY PROJECT
+      # VERIFY PROJECT FILES
       # --------------------------------------------------------
       - name: Verify project files
         run: |
@@ -114,7 +113,7 @@ jobs:
 
 
       # --------------------------------------------------------
-      # CLEAN PREVIOUS BUILD
+      # CLEAN OLD BUILD
       # --------------------------------------------------------
       - name: Clean previous build
         run: |
