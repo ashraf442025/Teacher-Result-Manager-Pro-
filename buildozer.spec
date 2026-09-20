@@ -7,82 +7,75 @@
 title = Teacher Result Manager Pro
 
 package.name = teacherresultmanager
-
 package.domain = org.teacherresultmanager
 
 source.dir = .
-
 source.main = main.py
+
+# ------------------------------------------------------------
+# Files to include
+# ------------------------------------------------------------
 
 source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,xml
 
+# ------------------------------------------------------------
+# Version
+# ------------------------------------------------------------
+
 version = 1.0.0
+
+# ------------------------------------------------------------
+# Python / Kivy requirements
+# ------------------------------------------------------------
 
 requirements = python3,kivy,kivymd,pyjnius,reportlab,pillow
 
-orientation = portrait
+# ------------------------------------------------------------
+# Orientation
+# ------------------------------------------------------------
 
+orientation = portrait
 fullscreen = 0
 
+# ------------------------------------------------------------
+# Android
+# ------------------------------------------------------------
 
-# ============================================================
-# ANDROID
-# ============================================================
-
-android.api = 36
-
+android.api = 35
 android.minapi = 24
-
 android.ndk = 28c
 
-android.archs = arm64-v8a,armeabi-v7a
+# IMPORTANT:
+# First APK build uses ARM64 only.
+# This greatly reduces native compilation time.
+android.archs = arm64-v8a
 
-android.accept_sdk_license = True
-
-android.allow_backup = True
-
-android.debug_artifact = apk
-
-android.release_artifact = aab
-
-
-# ============================================================
-# ANDROID PERMISSIONS
-# ============================================================
+# ------------------------------------------------------------
+# Android permissions
+# ------------------------------------------------------------
 
 android.permissions = INTERNET
 
-
-# ============================================================
-# ANDROIDX
-# ============================================================
+# ------------------------------------------------------------
+# Android build options
+# ------------------------------------------------------------
 
 android.enable_androidx = True
+android.allow_backup = True
 
+# ------------------------------------------------------------
+# APK output
+# ------------------------------------------------------------
 
-# ============================================================
-# PYTHON-FOR-ANDROID
-# ============================================================
+android.debug_artifact = apk
+android.release_artifact = aab
 
-p4a.fork = kivy
-p4a.branch = master
+# ------------------------------------------------------------
+# Python-for-Android
+# ------------------------------------------------------------
 
 p4a.bootstrap = sdl2
 
-
-# ============================================================
-# ANDROID DISPLAY
-# ============================================================
-
-android.immersive_mode = False
-
-
-# ============================================================
-# OPTIONAL
-# ============================================================
-
-# icon.filename = %(source.dir)s/icon.png
-
-# presplash.filename = %(source.dir)s/presplash.png
-# android.presplash_color = #FFFFFF
-
+# Do NOT force an old p4a branch.
+# Buildozer will use the compatible p4a available
+# in the build environment.
