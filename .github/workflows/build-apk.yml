@@ -4,22 +4,25 @@ on:
   workflow_dispatch:
 
 jobs:
+
   build:
-    name: Build Teacher Result Manager Pro
+
+    name: Build APK
     runs-on: ubuntu-22.04
 
     steps:
 
-      # ==========================================================
-      # 1. CHECKOUT
-      # ==========================================================
+      # =====================================================
+      # CHECKOUT
+      # =====================================================
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ==========================================================
-      # 2. JAVA 17
-      # ==========================================================
+
+      # =====================================================
+      # JAVA 17
+      # =====================================================
 
       - name: Setup Java 17
         uses: actions/setup-java@v5
@@ -27,29 +30,32 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      # ==========================================================
-      # 3. PYTHON 3.11
-      # ==========================================================
+
+      # =====================================================
+      # PYTHON 3.11
+      # =====================================================
 
       - name: Setup Python 3.11
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
-      # ==========================================================
-      # 4. SYSTEM PACKAGES
-      # ==========================================================
 
-      - name: Install system dependencies
+      # =====================================================
+      # SYSTEM DEPENDENCIES
+      # =====================================================
+
+      - name: Install system packages
         run: |
+
           sudo apt-get update
 
           sudo apt-get install -y \
             git \
-            zip \
-            unzip \
             wget \
             curl \
+            zip \
+            unzip \
             ant \
             autoconf \
             automake \
@@ -65,51 +71,54 @@ jobs:
             zlib1g-dev \
             build-essential
 
-      # ==========================================================
-      # 5. PYTHON BUILD TOOLS
-      # ==========================================================
+
+      # =====================================================
+      # PYTHON BUILD TOOLS
+      # =====================================================
 
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+
+          python -m pip install --upgrade pip
 
           python -m pip install \
+            setuptools \
+            wheel \
             "Cython<3.1" \
             buildozer
 
-      # ==========================================================
-      # 6. CHECK PROJECT FILES
-      # ==========================================================
+
+      # =====================================================
+      # CHECK PROJECT
+      # =====================================================
 
       - name: Check project files
         run: |
-          echo "=========================================="
+
+          echo "======================================"
           echo "PROJECT CHECK"
-          echo "=========================================="
+          echo "======================================"
 
           pwd
-          echo ""
 
+          echo ""
           ls -la
+
           echo ""
 
           test -f main.py
           test -f buildozer.spec
 
-          echo ""
           echo "main.py ............... OK"
           echo "buildozer.spec ....... OK"
 
-      # ==========================================================
-      # 7. INSTALL ANDROID COMMAND LINE TOOLS
-      # ==========================================================
 
-      - name: Install Android SDK Command Line Tools
+      # =====================================================
+      # ANDROID SDK
+      # =====================================================
+
+      - name: Install Android SDK
         run: |
-
-          echo "=========================================="
-          echo "ANDROID SDK SETUP"
-          echo "=========================================="
 
           SDK="$HOME/android-sdk"
 
@@ -119,13 +128,14 @@ jobs:
 
           wget -q \
             https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
-            -O commandlinetools.zip
+            -O android-tools.zip
 
-          unzip -q commandlinetools.zip \
+          unzip -q android-tools.zip \
             -d "$SDK/cmdline-tools"
 
-          mv "$SDK/cmdline-tools/cmdline-tools" \
-             "$SDK/cmdline-tools/latest"
+          mv \
+            "$SDK/cmdline-tools/cmdline-tools" \
+            "$SDK/cmdline-tools/latest"
 
           echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
           echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
@@ -133,140 +143,193 @@ jobs:
           echo "$SDK/platform-tools" >> "$GITHUB_PATH"
           echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
 
-          echo "ANDROID_HOME=$SDK"
-          echo "SDK setup completed."
 
-      # ==========================================================
-      # 8. ACCEPT SDK LICENSES
-      # ==========================================================
+      # =====================================================
+      # SDK LICENSES
+      # =====================================================
 
-      - name: Accept Android SDK licenses
+      - name: Accept Android licenses
         run: |
-
-          echo "=========================================="
-          echo "ACCEPTING ANDROID SDK LICENSES"
-          echo "=========================================="
 
           yes | sdkmanager --licenses || true
 
-          echo "SDK licenses accepted."
 
-      # ==========================================================
-      # 9. INSTALL ANDROID SDK COMPONENTS
-      # ==========================================================
+      # =====================================================
+      # ANDROID SDK PACKAGES
+      # =====================================================
 
-      - name: Install Android SDK packages
+      - name: Install Android packages
         run: |
-
-          echo "=========================================="
-          echo "INSTALLING ANDROID SDK COMPONENTS"
-          echo "=========================================="
 
           sdkmanager \
             "platform-tools" \
             "platforms;android-35" \
-            "build-tools;35.0.0"
+            "build-tools;35.0.0" \
+            "ndk;28.2.13676358"
 
-          echo "Android SDK packages installed."
 
-      # ==========================================================
-      # 10. INSTALL ANDROID NDK 28c
-      # ==========================================================
+      # =====================================================
+      # VERIFY SDK
+      # =====================================================
 
-      - name: Install Android NDK 28c
+      - name: Verify Android SDK
         run: |
 
-          echo "=========================================="
-          echo "INSTALLING NDK 28c"
-          echo "=========================================="
+          echo "======================================"
+          echo "ANDROID SDK"
+          echo "======================================"
 
-          sdkmanager "ndk;28.2.13676358"
-
-          echo "NDK 28c installed."
-
-      # ==========================================================
-      # 11. VERIFY ANDROID TOOLCHAIN
-      # ==========================================================
-
-      - name: Verify Android environment
-        run: |
-
-          echo "=========================================="
-          echo "ANDROID ENVIRONMENT"
-          echo "=========================================="
-
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-          echo ""
-          echo "SDKMANAGER:"
           sdkmanager --version
 
           echo ""
-          echo "ADB:"
-          adb version
 
-          echo ""
-          echo "AIDL:"
           find "$ANDROID_HOME/build-tools" \
             -name aidl \
             -type f \
             -print
 
           echo ""
-          echo "NDK:"
-          ls -la "$ANDROID_HOME/ndk" || true
 
-      # ==========================================================
-      # 12. PREPARE BUILD DIRECTORY
-      # ==========================================================
+          ls -la "$ANDROID_HOME/ndk"
 
-      - name: Prepare build directory
+
+      # =====================================================
+      # DOWNLOAD REPORTLAB SOURCE
+      # =====================================================
+
+      - name: Download ReportLab source
         run: |
+
+          echo "======================================"
+          echo "REPORTLAB SOURCE"
+          echo "======================================"
+
+          mkdir -p p4a-local-recipes
+
+          cd p4a-local-recipes
+
+          wget -O reportlab.tar.gz \
+            https://github.com/eduardocereto/reportlab/archive/refs/heads/master.tar.gz
+
+          tar -xzf reportlab.tar.gz
+
+          mv reportlab-master reportlab
+
+          echo ""
+          echo "ReportLab source downloaded."
+
+          ls -la reportlab
+
+
+      # =====================================================
+      # CREATE LOCAL REPORTLAB RECIPE
+      # =====================================================
+
+      - name: Create local ReportLab recipe
+        run: |
+
+          mkdir -p p4a-local-recipes/reportlab
+
+          cat > p4a-local-recipes/reportlab/__init__.py <<'PYEOF'
+
+          from pythonforandroid.recipe import PythonRecipe
+
+
+          class ReportLabRecipe(PythonRecipe):
+
+              version = "local"
+
+              url = None
+
+              depends = [
+                  "python3",
+                  "pillow"
+              ]
+
+              site_packages_name = "reportlab"
+
+              def should_build(self, arch):
+                  return True
+
+
+          recipe = ReportLabRecipe()
+
+          PYEOF
+
+          echo "Local ReportLab recipe created."
+
+
+      # =====================================================
+      # SHOW P4A RECIPE
+      # =====================================================
+
+      - name: Show local recipe
+        run: |
+
+          echo "======================================"
+          echo "LOCAL REPORTLAB RECIPE"
+          echo "======================================"
+
+          cat p4a-local-recipes/reportlab/__init__.py
+
+
+      # =====================================================
+      # CLEAN BUILD
+      # =====================================================
+
+      - name: Clean Buildozer
+        run: |
+
+          rm -rf .buildozer
           rm -rf bin
+
           mkdir -p bin
 
-      # ==========================================================
-      # 13. BUILD APK
-      # ==========================================================
+
+      # =====================================================
+      # BUILD APK
+      # =====================================================
 
       - name: Build APK
         env:
           PIP_NO_INPUT: "1"
+          PYTHONUNBUFFERED: "1"
         run: |
 
-          echo "=========================================="
-          echo "BUILDING TEACHER RESULT MANAGER PRO"
-          echo "=========================================="
+          echo "======================================"
+          echo "BUILDING APK"
+          echo "======================================"
 
           buildozer -v android debug
 
-      # ==========================================================
-      # 14. FIND APK
-      # ==========================================================
 
-      - name: Find generated APK
+      # =====================================================
+      # SEARCH APK
+      # =====================================================
+
+      - name: Find APK
         if: always()
         run: |
 
-          echo "=========================================="
-          echo "GENERATED APK FILES"
-          echo "=========================================="
+          echo "======================================"
+          echo "APK FILES"
+          echo "======================================"
 
           echo ""
-          echo "BIN DIRECTORY:"
+
           ls -lah bin || true
 
           echo ""
-          echo "SEARCHING FOR APK:"
+
           find . \
             -type f \
             -name "*.apk" \
-            -print
+            -print || true
 
-      # ==========================================================
-      # 15. UPLOAD APK
-      # ==========================================================
+
+      # =====================================================
+      # UPLOAD APK
+      # =====================================================
 
       - name: Upload APK
         if: success()
