@@ -1,155 +1,148 @@
-name: Build Teacher Result Manager Pro APK
+[app]
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+# ================================================================
+# BASIC APP INFORMATION
+# ================================================================
 
-jobs:
-  build:
-    runs-on: ubuntu-22.04
+title = Teacher Result Manager Pro
 
-    steps:
+package.name = teacherresultmanager
 
-      # ==========================================================
-      # 1. CHECKOUT
-      # ==========================================================
-      - name: Checkout repository
-        uses: actions/checkout@v4
+package.domain = org.teacherresultmanager
+
+version = 1.0.0
 
 
-      # ==========================================================
-      # 2. JAVA 17
-      # ==========================================================
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+# ================================================================
+# SOURCE
+# ================================================================
+
+source.dir = .
+
+source.main = main.py
+
+source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,xml
 
 
-      # ==========================================================
-      # 3. PYTHON 3.11
-      # ==========================================================
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+# ================================================================
+# PYTHON REQUIREMENTS
+# ================================================================
+
+requirements = python3,kivy,kivymd,pyjnius,reportlab,pillow
 
 
-      # ==========================================================
-      # 4. ANDROID SDK
-      # IMPORTANT:
-      # DO NOT REQUEST "tools"
-      # ==========================================================
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools'
+# ================================================================
+# SCREEN
+# ================================================================
+
+orientation = portrait
+
+fullscreen = 0
 
 
-      # ==========================================================
-      # 5. ACCEPT SDK LICENSES
-      # ==========================================================
-      - name: Accept Android SDK licenses
-        shell: bash
-        run: |
-          set +e
+# ================================================================
+# ANDROID SDK
+# ================================================================
 
-          yes | sdkmanager --licenses
+android.api = 35
 
-          exit 0
+android.minapi = 24
 
 
-      # ==========================================================
-      # 6. INSTALL REQUIRED SDK PACKAGES
-      # ==========================================================
-      - name: Install Android SDK packages
-        shell: bash
-        run: |
-          set -eux
+# ================================================================
+# ANDROID NDK
+# ================================================================
 
-          sdkmanager \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;35.0.0"
-
-          yes | sdkmanager --licenses || true
+android.ndk = 28c
 
 
-      # ==========================================================
-      # 7. VERIFY SDK
-      # ==========================================================
-      - name: Verify Android SDK
-        shell: bash
-        run: |
-          set -eux
+# ================================================================
+# ARCHITECTURE
+# ARM64 ONLY
+# ================================================================
 
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-          echo ""
-          echo "Installed Build Tools:"
-          ls -la "$ANDROID_HOME/build-tools"
-
-          echo ""
-          echo "Checking AIDL..."
-
-          test -f "$ANDROID_HOME/build-tools/35.0.0/aidl"
-
-          "$ANDROID_HOME/build-tools/35.0.0/aidl" --version || true
-
-          echo ""
-          echo "AIDL FOUND SUCCESSFULLY"
+android.archs = arm64-v8a
 
 
-      # ==========================================================
-      # 8. INSTALL BUILD DEPENDENCIES
-      # ==========================================================
-      - name: Install Python build dependencies
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools wheel
-          python -m pip install --upgrade buildozer
+# ================================================================
+# ANDROID PERMISSIONS
+# ================================================================
+
+android.permissions = INTERNET
 
 
-      # ==========================================================
-      # 9. CLEAN BUILD
-      # ==========================================================
-      - name: Clean Buildozer
-        shell: bash
-        run: |
-          buildozer android clean || true
+# ================================================================
+# ANDROIDX
+# ================================================================
+
+android.enable_androidx = True
 
 
-      # ==========================================================
-      # 10. BUILD APK
-      # ==========================================================
-      - name: Build APK
-        shell: bash
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
-        run: |
-          set -o pipefail
+# ================================================================
+# ANDROID BACKUP
+# ================================================================
 
-          echo "Final Android SDK check..."
-
-          test -f "$ANDROID_HOME/build-tools/35.0.0/aidl"
-
-          echo "Starting Buildozer..."
-
-          buildozer -v android debug
+android.allow_backup = True
 
 
-      # ==========================================================
-      # 11. UPLOAD APK
-      # ==========================================================
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Teacher-Result-Manager-Pro-APK
-          path: bin/*.apk
-          if-no-files-found: error
+# ================================================================
+# APK / AAB
+# ================================================================
+
+android.debug_artifact = apk
+
+android.release_artifact = aab
+
+
+# ================================================================
+# PYTHON-FOR-ANDROID
+# ================================================================
+
+p4a.bootstrap = sdl2
+
+
+# ================================================================
+# EXTRA P4A OPTIONS
+# ================================================================
+
+# Keep the build focused on ARM64.
+p4a.arch = arm64-v8a
+
+
+# ================================================================
+# LOG LEVEL
+# ================================================================
+
+log_level = 2
+
+
+# ================================================================
+# PRESPLASH
+# ================================================================
+
+# presplash.filename = %(source.dir)s/presplash.png
+# presplash.color = #FFFFFF
+
+
+# ================================================================
+# ICON
+# ================================================================
+
+# icon.filename = %(source.dir)s/icon.png
+
+
+# ================================================================
+# WINDOWS / DESKTOP
+# ================================================================
+
+# No special desktop settings required.
+
+
+# ================================================================
+# ADVANCED
+# ================================================================
+
+# The application stores its database/files inside
+# Android's application-private storage through Python code.
+
+# No hard-coded /sdcard paths are used here.
