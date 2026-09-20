@@ -4,43 +4,82 @@ on:
   workflow_dispatch:
 
 jobs:
-
   build:
-
-    name: Build Android APK
+    name: Build Teacher Result Manager Pro
     runs-on: ubuntu-22.04
 
     steps:
 
-      # ======================================================
+      # ==========================================================
       # 1. CHECKOUT
-      # ======================================================
+      # ==========================================================
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ======================================================
+      # ==========================================================
       # 2. JAVA 17
-      # ======================================================
+      # ==========================================================
 
-      - name: Set up Java 17
+      - name: Setup Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
-      # ======================================================
+      # ==========================================================
       # 3. PYTHON 3.11
-      # ======================================================
+      # ==========================================================
 
-      - name: Set up Python 3.11
+      - name: Setup Python 3.11
         uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
-      # ======================================================
-      # 4. CHECK PROJECT
-      # ======================================================
+      # ==========================================================
+      # 4. SYSTEM PACKAGES
+      # ==========================================================
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            wget \
+            curl \
+            ant \
+            autoconf \
+            automake \
+            autopoint \
+            ccache \
+            cmake \
+            gettext \
+            libffi-dev \
+            libltdl-dev \
+            libssl-dev \
+            libtool \
+            pkg-config \
+            zlib1g-dev \
+            build-essential
+
+      # ==========================================================
+      # 5. PYTHON BUILD TOOLS
+      # ==========================================================
+
+      - name: Install Buildozer
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
+          python -m pip install \
+            "Cython<3.1" \
+            buildozer
+
+      # ==========================================================
+      # 6. CHECK PROJECT FILES
+      # ==========================================================
 
       - name: Check project files
         run: |
@@ -61,85 +100,45 @@ jobs:
           echo "main.py ............... OK"
           echo "buildozer.spec ....... OK"
 
-      # ======================================================
-      # 5. SYSTEM PACKAGES
-      # ======================================================
+      # ==========================================================
+      # 7. INSTALL ANDROID COMMAND LINE TOOLS
+      # ==========================================================
 
-      - name: Install system dependencies
+      - name: Install Android SDK Command Line Tools
         run: |
-          sudo apt-get update
 
-          sudo apt-get install -y \
-            git \
-            zip \
-            unzip \
-            ant \
-            autoconf \
-            automake \
-            autopoint \
-            ccache \
-            cmake \
-            gettext \
-            libffi-dev \
-            libltdl-dev \
-            libssl-dev \
-            libtool \
-            pkg-config \
-            zlib1g-dev \
-            build-essential
-
-      # ======================================================
-      # 6. PYTHON BUILD TOOLS
-      # ======================================================
-
-      - name: Install Python build tools
-        run: |
-          python -m pip install --upgrade pip setuptools wheel
-
-          python -m pip install \
-            "Cython<3.1" \
-            buildozer
-
-      # ======================================================
-      # 7. SHOW VERSIONS
-      # ======================================================
-
-      - name: Show versions
-        run: |
           echo "=========================================="
-          echo "VERSIONS"
+          echo "ANDROID SDK SETUP"
           echo "=========================================="
 
-          python --version
-          pip --version
-          cython --version
-          buildozer --version
+          SDK="$HOME/android-sdk"
 
-          echo ""
-          java -version
+          mkdir -p "$SDK/cmdline-tools"
 
-      # ======================================================
-      # 8. CLEAN OLD BUILD
-      # ======================================================
+          cd "$HOME"
 
-      - name: Clean old Buildozer files
-        run: |
-          rm -rf .buildozer
-          rm -rf bin
+          wget -q \
+            https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip \
+            -O commandlinetools.zip
 
-          mkdir -p bin
+          unzip -q commandlinetools.zip \
+            -d "$SDK/cmdline-tools"
 
-      # ======================================================
-      # 9. PREPARE BUILD
-      # ======================================================
+          mv "$SDK/cmdline-tools/cmdline-tools" \
+             "$SDK/cmdline-tools/latest"
 
-      - name: Prepare Buildozer
-        run: |
-          buildozer android clean || true
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
 
-      # ======================================================
-      # 10. ACCEPT ANDROID SDK LICENSES
-      # ======================================================
+          echo "$SDK/platform-tools" >> "$GITHUB_PATH"
+          echo "$SDK/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+
+          echo "ANDROID_HOME=$SDK"
+          echo "SDK setup completed."
+
+      # ==========================================================
+      # 8. ACCEPT SDK LICENSES
+      # ==========================================================
 
       - name: Accept Android SDK licenses
         run: |
@@ -148,27 +147,88 @@ jobs:
           echo "ACCEPTING ANDROID SDK LICENSES"
           echo "=========================================="
 
-          SDK="$HOME/.buildozer/android/platform/android-sdk"
+          yes | sdkmanager --licenses || true
 
-          mkdir -p "$SDK"
+          echo "SDK licenses accepted."
 
-          if [ -x "$SDK/cmdline-tools/latest/bin/sdkmanager" ]; then
-            yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses || true
-          fi
+      # ==========================================================
+      # 9. INSTALL ANDROID SDK COMPONENTS
+      # ==========================================================
 
-          if [ -x "$SDK/cmdline-tools/bin/sdkmanager" ]; then
-            yes | "$SDK/cmdline-tools/bin/sdkmanager" --licenses || true
-          fi
+      - name: Install Android SDK packages
+        run: |
 
-          if [ -x "$SDK/tools/bin/sdkmanager" ]; then
-            yes | "$SDK/tools/bin/sdkmanager" --licenses || true
-          fi
+          echo "=========================================="
+          echo "INSTALLING ANDROID SDK COMPONENTS"
+          echo "=========================================="
 
-          echo "SDK license step completed."
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0"
 
-      # ======================================================
-      # 11. BUILD APK
-      # ======================================================
+          echo "Android SDK packages installed."
+
+      # ==========================================================
+      # 10. INSTALL ANDROID NDK 28c
+      # ==========================================================
+
+      - name: Install Android NDK 28c
+        run: |
+
+          echo "=========================================="
+          echo "INSTALLING NDK 28c"
+          echo "=========================================="
+
+          sdkmanager "ndk;28.2.13676358"
+
+          echo "NDK 28c installed."
+
+      # ==========================================================
+      # 11. VERIFY ANDROID TOOLCHAIN
+      # ==========================================================
+
+      - name: Verify Android environment
+        run: |
+
+          echo "=========================================="
+          echo "ANDROID ENVIRONMENT"
+          echo "=========================================="
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+          echo ""
+          echo "SDKMANAGER:"
+          sdkmanager --version
+
+          echo ""
+          echo "ADB:"
+          adb version
+
+          echo ""
+          echo "AIDL:"
+          find "$ANDROID_HOME/build-tools" \
+            -name aidl \
+            -type f \
+            -print
+
+          echo ""
+          echo "NDK:"
+          ls -la "$ANDROID_HOME/ndk" || true
+
+      # ==========================================================
+      # 12. PREPARE BUILD DIRECTORY
+      # ==========================================================
+
+      - name: Prepare build directory
+        run: |
+          rm -rf bin
+          mkdir -p bin
+
+      # ==========================================================
+      # 13. BUILD APK
+      # ==========================================================
 
       - name: Build APK
         env:
@@ -179,31 +239,34 @@ jobs:
           echo "BUILDING TEACHER RESULT MANAGER PRO"
           echo "=========================================="
 
-          yes | buildozer -v android debug
+          buildozer -v android debug
 
-      # ======================================================
-      # 12. CHECK APK
-      # ======================================================
+      # ==========================================================
+      # 14. FIND APK
+      # ==========================================================
 
-      - name: Check generated APK
+      - name: Find generated APK
         if: always()
         run: |
 
           echo "=========================================="
-          echo "APK SEARCH"
+          echo "GENERATED APK FILES"
           echo "=========================================="
 
           echo ""
-          echo "BIN:"
+          echo "BIN DIRECTORY:"
           ls -lah bin || true
 
           echo ""
-          echo "ALL APK FILES:"
-          find . -type f -name "*.apk" -print || true
+          echo "SEARCHING FOR APK:"
+          find . \
+            -type f \
+            -name "*.apk" \
+            -print
 
-      # ======================================================
-      # 13. UPLOAD APK
-      # ======================================================
+      # ==========================================================
+      # 15. UPLOAD APK
+      # ==========================================================
 
       - name: Upload APK
         if: success()
