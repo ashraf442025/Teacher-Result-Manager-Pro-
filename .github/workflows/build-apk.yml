@@ -10,35 +10,62 @@ jobs:
 
     steps:
 
-      # ========================================================
-      # CHECKOUT
-      # ========================================================
-      - name: Checkout source code
+      # ======================================================
+      # 1. Checkout project
+      # ======================================================
+
+      - name: Checkout repository
         uses: actions/checkout@v4
 
+      # ======================================================
+      # 2. Java 17
+      # ======================================================
 
-      # ========================================================
-      # JAVA 17
-      # ========================================================
       - name: Set up Java 17
         uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
+      # ======================================================
+      # 3. Python 3.11
+      # ======================================================
 
-      # ========================================================
-      # PYTHON 3.11
-      # ========================================================
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
+      # ======================================================
+      # 4. Verify project files
+      # ======================================================
 
-      # ========================================================
-      # SYSTEM DEPENDENCIES
-      # ========================================================
+      - name: Check project files
+        run: |
+          echo "========================================"
+          echo "PROJECT FILES"
+          echo "========================================"
+
+          pwd
+          echo ""
+
+          ls -la
+          echo ""
+
+          echo "Checking main.py..."
+          test -f main.py
+
+          echo "Checking buildozer.spec..."
+          test -f buildozer.spec
+
+          echo ""
+          echo "main.py and buildozer.spec found."
+          echo ""
+
+      # ======================================================
+      # 5. Install system dependencies
+      # ======================================================
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -47,165 +74,93 @@ jobs:
             git \
             zip \
             unzip \
+            ant \
             autoconf \
             automake \
             autopoint \
+            ccache \
+            cmake \
+            gettext \
+            libffi-dev \
+            libltdl-dev \
+            libssl-dev \
             libtool \
             pkg-config \
-            cmake \
-            build-essential \
-            libltdl-dev \
-            libffi-dev \
-            libssl-dev \
-            gettext \
-            ccache
+            zlib1g-dev \
+            build-essential
 
+      # ======================================================
+      # 6. Upgrade Python build tools
+      # ======================================================
 
-      # ========================================================
-      # PYTHON BUILD TOOLS
-      # ========================================================
       - name: Install Python build tools
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools wheel
-          python -m pip install --upgrade cython==0.29.37
+          python -m pip install --upgrade pip setuptools wheel
 
+          python -m pip install \
+            "Cython<3.1" \
+            buildozer
 
-      # ========================================================
-      # INSTALL BUILDOZER
-      # ========================================================
-      - name: Install Buildozer
-        run: |
-          python -m pip install --upgrade buildozer
+      # ======================================================
+      # 7. Show versions
+      # ======================================================
 
-
-      # ========================================================
-      # VERIFY PROJECT
-      # ========================================================
-      - name: Verify project files
+      - name: Show build environment
         run: |
           echo "========================================"
-          echo "PROJECT"
+          echo "BUILD ENVIRONMENT"
           echo "========================================"
 
-          pwd
-          ls -la
-
-          test -f main.py
-          test -f buildozer.spec
-
-          echo "main.py:"
-          wc -c main.py
-
-          echo "buildozer.spec:"
-          wc -c buildozer.spec
-
-
-      # ========================================================
-      # CHECK BUILDOZER
-      # ========================================================
-      - name: Check Buildozer
-        run: |
+          python --version
+          pip --version
+          cython --version
           buildozer --version
+          java -version
 
+      # ======================================================
+      # 8. Clean old Buildozer output
+      # ======================================================
 
-      # ========================================================
-      # INITIALIZE PYTHON-FOR-ANDROID
-      #
-      # This makes Buildozer download/setup p4a first.
-      # ========================================================
-      - name: Initialize python-for-android
+      - name: Clean previous build
         run: |
-          buildozer android p4a -- --help
-
-
-      # ========================================================
-      # REMOVE BROKEN REPORTLAB RECIPE
-      #
-      # The current p4a ReportLab recipe points to the old
-      # hg.reportlab.com source which returns HTTP 403.
-      #
-      # Removing the recipe allows ReportLab to be handled
-      # through the normal Python package installation path.
-      # ========================================================
-      - name: Work around ReportLab recipe 403
-        run: |
-          P4A_DIR=".buildozer/android/platform/python-for-android"
-
-          echo "Python-for-Android directory:"
-          echo "$P4A_DIR"
-
-          if [ -d "$P4A_DIR/pythonforandroid/recipes/reportlab" ]; then
-            echo "Removing ReportLab recipe..."
-            rm -rf "$P4A_DIR/pythonforandroid/recipes/reportlab"
-          else
-            echo "ReportLab recipe directory not found."
-          fi
-
-          echo "Checking ReportLab recipe:"
-          if [ -d "$P4A_DIR/pythonforandroid/recipes/reportlab" ]; then
-            echo "ERROR: ReportLab recipe still exists."
-            exit 1
-          else
-            echo "ReportLab recipe successfully removed."
-          fi
-
-
-      # ========================================================
-      # CLEAN APPLICATION BUILD
-      #
-      # Do NOT delete the p4a directory here because the
-      # ReportLab workaround above modifies it.
-      # ========================================================
-      - name: Clean application build
-        run: |
+          rm -rf .buildozer
           rm -rf bin
 
-          rm -rf .buildozer/android/platform/build-arm64-v8a_armeabi-v7a
+          mkdir -p bin
 
-          echo "Clean complete."
+      # ======================================================
+      # 9. Build APK
+      # ======================================================
 
-
-      # ========================================================
-      # BUILD DEBUG APK
-      # ========================================================
-      - name: Build Debug APK
+      - name: Build APK
+        env:
+          PIP_NO_INPUT: "1"
         run: |
           buildozer -v android debug
 
+      # ======================================================
+      # 10. Show generated files
+      # ======================================================
 
-      # ========================================================
-      # CHECK APK
-      # ========================================================
-      - name: Check APK output
+      - name: List APK files
+        if: always()
         run: |
           echo "========================================"
-          echo "APK OUTPUT"
+          echo "BIN DIRECTORY"
           echo "========================================"
 
-          if [ ! -d bin ]; then
-            echo "ERROR: bin directory was not created."
-            exit 1
-          fi
+          ls -lah bin || true
 
-          ls -lah bin/
+          echo ""
+          echo "Searching for APK files..."
+          find . -type f -name "*.apk" -print || true
 
-          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+      # ======================================================
+      # 11. Upload APK
+      # ======================================================
 
-          echo "APK COUNT: $APK_COUNT"
-
-          if [ "$APK_COUNT" -eq 0 ]; then
-            echo "ERROR: No APK was created."
-            exit 1
-          fi
-
-          find bin -maxdepth 1 -type f -name "*.apk" -print
-
-
-      # ========================================================
-      # UPLOAD APK
-      # ========================================================
-      - name: Upload APK
+      - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: Teacher-Result-Manager-Pro-APK
