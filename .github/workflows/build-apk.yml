@@ -1,331 +1,111 @@
-name: Build Teacher Result Manager Pro APK
+[app]
 
-on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
+# ================================================================
+# APPLICATION
+# ================================================================
 
-jobs:
+title = Teacher Result Manager Pro
 
-  build:
+package.name = teacherresultmanager
 
-    runs-on: ubuntu-22.04
+package.domain = org.teacherresultmanager
 
-    steps:
+version = 1.0.0
 
-      # ==========================================================
-      # 1. CHECKOUT
-      # ==========================================================
 
-      - name: Checkout repository
-        uses: actions/checkout@v4
+# ================================================================
+# SOURCE
+# ================================================================
 
+source.dir = .
 
-      # ==========================================================
-      # 2. JAVA 17
-      # ==========================================================
+source.main = main.py
 
-      - name: Setup Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
+source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,xml
 
 
-      # ==========================================================
-      # 3. PYTHON 3.11
-      # ==========================================================
+# ================================================================
+# REQUIREMENTS
+# ================================================================
 
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
+requirements = python3,kivy,kivymd,pyjnius,reportlab,pillow
 
 
-      # ==========================================================
-      # 4. ANDROID SDK COMMAND LINE TOOLS
-      # ==========================================================
+# ================================================================
+# DISPLAY
+# ================================================================
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
+orientation = portrait
 
+fullscreen = 0
 
-      # ==========================================================
-      # 5. FIND SDKMANAGER
-      # ==========================================================
 
-      - name: Locate Android SDK tools
-        shell: bash
-        run: |
-          set -eux
+# ================================================================
+# ANDROID API
+# ================================================================
 
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+android.api = 35
 
-          echo ""
-          echo "Command line tools:"
-          find "$ANDROID_HOME/cmdline-tools" \
-            -maxdepth 3 \
-            -type f \
-            -name sdkmanager \
-            -print
+android.minapi = 24
 
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
-            -type f \
-            -path "*/bin/sdkmanager" \
-            | head -n 1)"
 
-          test -n "$SDKMANAGER"
+# ================================================================
+# ANDROID NDK
+# ================================================================
 
-          echo "SDKMANAGER=$SDKMANAGER"
+android.ndk = 28c
 
-          "$SDKMANAGER" --version
 
+# ================================================================
+# ARCHITECTURE
+# ================================================================
 
-      # ==========================================================
-      # 6. ACCEPT LICENSES
-      # ==========================================================
+android.archs = arm64-v8a
 
-      - name: Accept Android SDK licenses
-        shell: bash
-        run: |
-          set +e
 
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
-            -type f \
-            -path "*/bin/sdkmanager" \
-            | head -n 1)"
+# ================================================================
+# ANDROID PERMISSIONS
+# ================================================================
 
-          yes | "$SDKMANAGER" --licenses
+android.permissions = INTERNET
 
-          exit 0
 
+# ================================================================
+# ANDROIDX
+# ================================================================
 
-      # ==========================================================
-      # 7. INSTALL REQUIRED ANDROID PACKAGES
-      # ==========================================================
+android.enable_androidx = True
 
-      - name: Install Android SDK packages
-        shell: bash
-        run: |
-          set -eux
 
-          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" \
-            -type f \
-            -path "*/bin/sdkmanager" \
-            | head -n 1)"
+# ================================================================
+# ANDROID BACKUP
+# ================================================================
 
-          echo "Using:"
-          echo "$SDKMANAGER"
+android.allow_backup = True
 
-          "$SDKMANAGER" \
-            "platform-tools" \
-            "platforms;android-35" \
-            "build-tools;37.0.0" \
-            "ndk;28.2.13676358"
 
-          yes | "$SDKMANAGER" --licenses || true
+# ================================================================
+# APK / AAB
+# ================================================================
 
+android.debug_artifact = apk
 
-      # ==========================================================
-      # 8. VERIFY SDK
-      # ==========================================================
+android.release_artifact = aab
 
-      - name: Verify Android SDK
-        shell: bash
-        run: |
-          set -eux
 
-          echo ""
-          echo "========================================"
-          echo "BUILD TOOLS"
-          echo "========================================"
+# ================================================================
+# PYTHON-FOR-ANDROID
+# ================================================================
 
-          ls -la "$ANDROID_HOME/build-tools"
+p4a.fork = kivy
 
-          test -f \
-            "$ANDROID_HOME/build-tools/37.0.0/aidl"
+p4a.branch = develop
 
-          echo "AIDL FOUND"
+p4a.bootstrap = sdl2
 
 
-          echo ""
-          echo "========================================"
-          echo "ANDROID PLATFORM"
-          echo "========================================"
+# ================================================================
+# LOGGING
+# ================================================================
 
-          test -d \
-            "$ANDROID_HOME/platforms/android-35"
-
-          echo "ANDROID 35 FOUND"
-
-
-          echo ""
-          echo "========================================"
-          echo "NDK"
-          echo "========================================"
-
-          test -d \
-            "$ANDROID_HOME/ndk/28.2.13676358"
-
-          echo "NDK 28c FOUND"
-
-
-      # ==========================================================
-      # 9. LINUX DEPENDENCIES
-      # ==========================================================
-
-      - name: Install Linux dependencies
-        shell: bash
-        run: |
-          sudo apt-get update
-
-          sudo apt-get install -y \
-            git \
-            zip \
-            unzip \
-            autoconf \
-            automake \
-            autopoint \
-            libtool \
-            pkg-config \
-            cmake \
-            libffi-dev \
-            libssl-dev \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            gettext
-
-
-      # ==========================================================
-      # 10. INSTALL BUILDOZER
-      # ==========================================================
-
-      - name: Install Buildozer
-        shell: bash
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools wheel
-
-          python -m pip install \
-            "cython<3.1"
-
-          python -m pip install \
-            git+https://github.com/kivy/buildozer.git
-
-
-      # ==========================================================
-      # 11. CHECK BUILDOZER
-      # ==========================================================
-
-      - name: Check build environment
-        shell: bash
-        run: |
-          set -eux
-
-          python --version
-
-          java -version
-
-          buildozer --version
-
-          echo "ANDROID_HOME=$ANDROID_HOME"
-
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-
-
-      # ==========================================================
-      # 12. CHECK PROJECT
-      # ==========================================================
-
-      - name: Check project files
-        shell: bash
-        run: |
-          set -eux
-
-          test -f main.py
-          test -f buildozer.spec
-
-          echo ""
-          echo "Project:"
-          ls -lah
-
-
-      # ==========================================================
-      # 13. CLEAN OLD BUILDOZER DATA
-      # ==========================================================
-
-      - name: Clean Buildozer
-        shell: bash
-        run: |
-          rm -rf .buildozer
-          rm -rf bin
-
-
-      # ==========================================================
-      # 14. BUILD APK
-      # ==========================================================
-
-      - name: Build APK
-        shell: bash
-        env:
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
-
-        run: |
-          set -o pipefail
-
-          echo ""
-          echo "========================================"
-          echo "FINAL SDK CHECK"
-          echo "========================================"
-
-          test -f \
-            "$ANDROID_HOME/build-tools/37.0.0/aidl"
-
-          test -d \
-            "$ANDROID_HOME/platforms/android-35"
-
-          test -d \
-            "$ANDROID_HOME/ndk/28.2.13676358"
-
-          echo "SDK READY"
-          echo "AIDL READY"
-          echo "NDK READY"
-
-
-          echo ""
-          echo "========================================"
-          echo "BUILDING APK"
-          echo "========================================"
-
-          buildozer -v android debug
-
-
-      # ==========================================================
-      # 15. SHOW APK
-      # ==========================================================
-
-      - name: Show APK
-        shell: bash
-        run: |
-          echo ""
-          echo "========================================"
-          echo "APK OUTPUT"
-          echo "========================================"
-
-          ls -lah bin/
-
-
-      # ==========================================================
-      # 16. UPLOAD APK
-      # ==========================================================
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: Teacher-Result-Manager-Pro-APK
-          path: bin/*.apk
-          if-no-files-found: error
+log_level = 2
