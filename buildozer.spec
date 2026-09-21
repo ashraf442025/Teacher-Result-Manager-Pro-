@@ -73,8 +73,6 @@ android.ndk_path = /usr/local/lib/android/sdk/ndk/28.2.13676358
 # GitHub Actions আগে থেকেই SDK packages install করবে
 # ================================================================
 
-android.skip_update = True
-
 
 # ================================================================
 # ARCHITECTURE
