@@ -7,7 +7,9 @@ on:
       - main
 
 jobs:
+
   build:
+
     runs-on: ubuntu-22.04
 
     steps:
@@ -15,6 +17,7 @@ jobs:
       # ==========================================================
       # 1. CHECKOUT
       # ==========================================================
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -22,6 +25,7 @@ jobs:
       # ==========================================================
       # 2. JAVA 17
       # ==========================================================
+
       - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
@@ -32,6 +36,7 @@ jobs:
       # ==========================================================
       # 3. PYTHON 3.11
       # ==========================================================
+
       - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
@@ -39,19 +44,17 @@ jobs:
 
 
       # ==========================================================
-      # 4. ANDROID SDK
-      # IMPORTANT:
-      # DO NOT REQUEST "tools"
+      # 4. ANDROID SDK COMMAND LINE TOOLS
       # ==========================================================
+
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools'
 
 
       # ==========================================================
-      # 5. ACCEPT SDK LICENSES
+      # 5. ACCEPT ALL SDK LICENSES
       # ==========================================================
+
       - name: Accept Android SDK licenses
         shell: bash
         run: |
@@ -63,8 +66,12 @@ jobs:
 
 
       # ==========================================================
-      # 6. INSTALL REQUIRED SDK PACKAGES
+      # 6. INSTALL EXACT ANDROID PACKAGES
+      #
+      # IMPORTANT:
+      # DO NOT INSTALL "tools"
       # ==========================================================
+
       - name: Install Android SDK packages
         shell: bash
         run: |
@@ -73,80 +80,255 @@ jobs:
           sdkmanager \
             "platform-tools" \
             "platforms;android-35" \
-            "build-tools;35.0.0"
+            "build-tools;37.0.0" \
+            "ndk;28.2.13676358"
 
           yes | sdkmanager --licenses || true
 
+          echo ""
+          echo "========================================"
+          echo "ANDROID SDK PACKAGES"
+          echo "========================================"
+
+          ls -la "$ANDROID_HOME/build-tools"
+
+          echo ""
+          echo "========================================"
+          echo "NDK"
+          echo "========================================"
+
+          ls -la "$ANDROID_HOME/ndk"
+
+          echo ""
+          echo "========================================"
+          echo "AIDL CHECK"
+          echo "========================================"
+
+          test -f "$ANDROID_HOME/build-tools/37.0.0/aidl"
+
+          echo "AIDL FOUND"
+
 
       # ==========================================================
-      # 7. VERIFY SDK
+      # 7. BUILDIZER / BUILDOZER COMPATIBILITY
+      #
+      # Some Buildozer versions look for:
+      #
+      # tools/bin/sdkmanager
+      #
+      # Modern Android SDK uses:
+      #
+      # cmdline-tools/latest/bin/sdkmanager
+      #
+      # So create compatibility symlink.
       # ==========================================================
-      - name: Verify Android SDK
+
+      - name: Prepare Android SDK compatibility
         shell: bash
         run: |
           set -eux
 
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+          mkdir -p "$ANDROID_HOME/tools"
+
+          rm -rf "$ANDROID_HOME/tools/bin"
+
+          ln -s \
+            "$ANDROID_HOME/cmdline-tools/latest/bin" \
+            "$ANDROID_HOME/tools/bin"
 
           echo ""
-          echo "Installed Build Tools:"
-          ls -la "$ANDROID_HOME/build-tools"
+          echo "SDK manager:"
+          "$ANDROID_HOME/tools/bin/sdkmanager" --version
 
           echo ""
-          echo "Checking AIDL..."
-
-          test -f "$ANDROID_HOME/build-tools/35.0.0/aidl"
-
-          "$ANDROID_HOME/build-tools/35.0.0/aidl" --version || true
-
-          echo ""
-          echo "AIDL FOUND SUCCESSFULLY"
+          echo "AIDL:"
+          "$ANDROID_HOME/build-tools/37.0.0/aidl" --version || true
 
 
       # ==========================================================
-      # 8. INSTALL BUILD DEPENDENCIES
+      # 8. VERIFY NDK
       # ==========================================================
-      - name: Install Python build dependencies
+
+      - name: Verify Android NDK
         shell: bash
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools wheel
-          python -m pip install --upgrade buildozer
+          set -eux
+
+          test -d "$ANDROID_HOME/ndk/28.2.13676358"
+
+          echo "NDK 28c FOUND"
+
+          ls -la "$ANDROID_HOME/ndk/28.2.13676358"
 
 
       # ==========================================================
-      # 9. CLEAN BUILD
+      # 9. INSTALL SYSTEM DEPENDENCIES
       # ==========================================================
+
+      - name: Install Linux dependencies
+        shell: bash
+        run: |
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            autoconf \
+            automake \
+            autopoint \
+            libtool \
+            pkg-config \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            gettext
+
+
+      # ==========================================================
+      # 10. INSTALL BUILDOZER
+      # ==========================================================
+
+      - name: Install Buildozer
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+
+          python -m pip install \
+            "cython<3.1"
+
+          python -m pip install \
+            git+https://github.com/kivy/buildozer.git
+
+
+      # ==========================================================
+      # 11. CHECK BUILDOZER
+      # ==========================================================
+
+      - name: Check Buildozer
+        shell: bash
+        run: |
+          buildozer --version
+
+          python --version
+
+          java -version
+
+          echo "ANDROID_HOME=$ANDROID_HOME"
+
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
+
+
+      # ==========================================================
+      # 12. CHECK PROJECT FILES
+      # ==========================================================
+
+      - name: Check project
+        shell: bash
+        run: |
+          set -eux
+
+          test -f main.py
+
+          test -f buildozer.spec
+
+          echo ""
+          echo "Project files:"
+          ls -lah
+
+
+      # ==========================================================
+      # 13. CLEAN OLD BUILDOZER DATA
+      # ==========================================================
+
       - name: Clean Buildozer
         shell: bash
         run: |
           buildozer android clean || true
 
+          rm -rf .buildozer
+
 
       # ==========================================================
-      # 10. BUILD APK
+      # 14. RE-CREATE SDK COMPATIBILITY AFTER CLEAN
       # ==========================================================
+
+      - name: Restore SDK compatibility
+        shell: bash
+        run: |
+          set -eux
+
+          mkdir -p "$ANDROID_HOME/tools"
+
+          rm -rf "$ANDROID_HOME/tools/bin"
+
+          ln -s \
+            "$ANDROID_HOME/cmdline-tools/latest/bin" \
+            "$ANDROID_HOME/tools/bin"
+
+          test -f "$ANDROID_HOME/build-tools/37.0.0/aidl"
+
+          test -d "$ANDROID_HOME/ndk/28.2.13676358"
+
+
+      # ==========================================================
+      # 15. BUILD APK
+      # ==========================================================
+
       - name: Build APK
         shell: bash
         env:
           ANDROID_HOME: ${{ env.ANDROID_HOME }}
           ANDROID_SDK_ROOT: ${{ env.ANDROID_HOME }}
+
         run: |
           set -o pipefail
 
-          echo "Final Android SDK check..."
+          echo ""
+          echo "========================================"
+          echo "FINAL SDK CHECK"
+          echo "========================================"
 
-          test -f "$ANDROID_HOME/build-tools/35.0.0/aidl"
+          test -f "$ANDROID_HOME/build-tools/37.0.0/aidl"
 
-          echo "Starting Buildozer..."
+          test -d "$ANDROID_HOME/platforms/android-35"
+
+          test -d "$ANDROID_HOME/ndk/28.2.13676358"
+
+          echo "SDK OK"
+          echo "AIDL OK"
+          echo "NDK OK"
+
+          echo ""
+          echo "========================================"
+          echo "STARTING BUILDOZER"
+          echo "========================================"
 
           buildozer -v android debug
 
 
       # ==========================================================
-      # 11. UPLOAD APK
+      # 16. SHOW APK
       # ==========================================================
+
+      - name: Show APK
+        shell: bash
+        run: |
+          echo ""
+          echo "========================================"
+          echo "APK FILES"
+          echo "========================================"
+
+          ls -lah bin/
+
+
+      # ==========================================================
+      # 17. UPLOAD APK
+      # ==========================================================
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
