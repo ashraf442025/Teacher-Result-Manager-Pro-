@@ -17,18 +17,16 @@ orientation = portrait
 
 fullscreen = 0
 
+android.api = 35
+android.minapi = 24
+android.ndk = 28c
+android.ndk_api = 24
+android.accept_sdk_license = True
+
+p4a.source_dir = /home/runner/python-for-android
+
 
 [buildozer]
 
 log_level = 2
 warn_on_root = 1
-
-
-[buildozer:android]
-
-android.api = 35
-android.minapi = 24
-android.ndk = 28c
-android.accept_sdk_license = True
-
-p4a.source_dir = /home/runner/python-for-android
