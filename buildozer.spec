@@ -1,34 +1,38 @@
 [app]
 
 # ================================================================
-# APPLICATION
+# TEACHER RESULT MANAGER PRO
 # ================================================================
 
 title = Teacher Result Manager Pro
 
-package.name = teacherresultmanager
+package.name = teacherresultmanagerpro
 
-package.domain = org.teacherresultmanager
-
-version = 1.0.0
-
-
-# ================================================================
-# SOURCE
-# ================================================================
+package.domain = org.teacherresultmanagerpro
 
 source.dir = .
 
 source.main = main.py
 
-source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,xml
-
+version = 1.0.0
 
 # ================================================================
 # PYTHON REQUIREMENTS
 # ================================================================
 
 requirements = python3,kivy,kivymd,pyjnius,reportlab,pillow
+
+# ================================================================
+# SOURCE FILES
+# ================================================================
+
+source.include_exts = py,kv,png,jpg,jpeg,gif,ttf,otf,atlas,json,txt,xml
+
+source.include_patterns = student_photos/*,fonts/*
+
+source.exclude_exts = pyc,pyo
+
+source.exclude_dirs = .git,.github,.buildozer,bin,__pycache__
 
 
 # ================================================================
@@ -41,101 +45,98 @@ fullscreen = 0
 
 
 # ================================================================
-# ANDROID API
+# ICON
+# ================================================================
+
+# If you have icon.png in the root folder, remove the # below.
+#
+# icon.filename = %(source.dir)s/icon.png
+
+
+# ================================================================
+# PRESPLASH
+# ================================================================
+
+# Disabled intentionally for maximum compatibility.
+#
+# presplash.filename = %(source.dir)s/presplash.png
+
+
+# ================================================================
+# ANDROID
 # ================================================================
 
 android.api = 35
 
-android.minapi = 24
+android.minapi = 21
 
+android.ndk = 25b
 
-# ================================================================
-# ANDROID NDK
-# NDK 28c = 28.2.13676358
-# ================================================================
+android.ndk_api = 21
 
-android.ndk = 28c
+android.archs = arm64-v8a,armeabi-v7a
 
+android.accept_sdk_license = True
 
-# ================================================================
-# ANDROID SDK / NDK PATH
-# GitHub Actions runner-এর SDK ব্যবহার করা হবে
-# ================================================================
+android.entrypoint = org.kivy.android.PythonActivity
 
-android.sdk_path = /usr/local/lib/android/sdk
-
-android.ndk_path = /usr/local/lib/android/sdk/ndk/28.2.13676358
-
-
-# ================================================================
-# IMPORTANT
-# Buildozer নিজে SDK update/install করবে না
-# GitHub Actions আগে থেকেই SDK packages install করবে
-# ================================================================
-
-
-# ================================================================
-# ARCHITECTURE
-# ================================================================
-
-android.archs = arm64-v8a
-
-
-# ================================================================
-# ANDROID PERMISSIONS
-# ================================================================
-
-android.permissions = INTERNET
-
-
-# ================================================================
-# ANDROIDX
-# ================================================================
-
-android.enable_androidx = True
-
-
-# ================================================================
-# BACKUP
-# ================================================================
+android.apptheme = @android:style/Theme.Material.Light.NoActionBar
 
 android.allow_backup = True
 
-
-# ================================================================
-# APK / AAB
-# ================================================================
-
-android.debug_artifact = apk
-
-android.release_artifact = aab
+android.permissions = INTERNET
 
 
 # ================================================================
 # PYTHON-FOR-ANDROID
 # ================================================================
 
-p4a.fork = kivy
-
-p4a.branch = develop
-
-
-# ================================================================
-# BOOTSTRAP
-# ================================================================
-
 p4a.bootstrap = sdl2
 
-
-# ================================================================
-# PRIVATE STORAGE
-# ================================================================
-
-android.private_storage = True
+# IMPORTANT:
+# Use the stable/master p4a branch with Python 3.12.
+#
+p4a.branch = master
 
 
 # ================================================================
-# LOG
+# ANDROID DEBUG
 # ================================================================
 
-log_level = 2
+android.debug_artifact = apk
+
+
+# ================================================================
+# ANDROID RELEASE
+# ================================================================
+
+android.release_artifact = aab
+
+
+# ================================================================
+# LOGCAT
+# ================================================================
+
+android.logcat_filters = *:S python:D
+
+
+# ================================================================
+# EXTRA P4A ARGUMENTS
+# ================================================================
+
+# Keep empty.
+#
+# p4a.extra_args =
+
+
+# ================================================================
+# BACKUP
+# ================================================================
+
+# Keep Android backup enabled.
+android.allow_backup = True
+
+
+# ================================================================
+# END
+# ================================================================
