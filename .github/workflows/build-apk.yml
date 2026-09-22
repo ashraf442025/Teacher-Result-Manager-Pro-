@@ -52,7 +52,7 @@ jobs:
             libncursesw5-dev \
             libltdl-dev
 
-      - name: Install Python build tools
+      - name: Install Buildozer
         run: |
           python -m pip install --upgrade "pip==24.0"
           python -m pip install "buildozer==1.5.0"
@@ -61,49 +61,57 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
-      # Buildozer 1.5.0 expects the legacy SDK path:
-      # $ANDROID_SDK_ROOT/tools/bin/sdkmanager
-      # setup-android installs it under cmdline-tools.
-      - name: Fix Buildozer SDK manager path
+      - name: Prepare Buildozer Android SDK
         run: |
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
 
-          echo "Android SDK: $SDK"
+          echo "System Android SDK:"
+          echo "$SDK"
 
-          echo "Searching for sdkmanager..."
+          echo "Buildozer Android SDK:"
+          echo "$BUILDOZER_SDK"
 
-          SDKMANAGER=$(find "$SDK/cmdline-tools" \
+          # Start from a clean Buildozer Android SDK.
+          rm -rf "$BUILDOZER_SDK"
+
+          mkdir -p "$BUILDOZER_SDK"
+
+          # Copy the Android SDK installed by setup-android
+          # into the location Buildozer expects.
+          cp -a "$SDK/." "$BUILDOZER_SDK/"
+
+          # Buildozer 1.5.0 expects the legacy sdkmanager path.
+          mkdir -p "$BUILDOZER_SDK/tools/bin"
+
+          SDKMANAGER=$(find "$BUILDOZER_SDK/cmdline-tools" \
             -path '*/bin/sdkmanager' \
             -type f | head -n 1)
 
           if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: sdkmanager was not found"
-            find "$SDK/cmdline-tools" -maxdepth 5 -type f | head -100
+            echo "ERROR: sdkmanager not found"
+            find "$BUILDOZER_SDK/cmdline-tools" -maxdepth 5 -type f | head -100
             exit 1
           fi
 
-          echo "Found sdkmanager:"
-          echo "$SDKMANAGER"
+          ln -sf "$SDKMANAGER" \
+            "$BUILDOZER_SDK/tools/bin/sdkmanager"
 
-          mkdir -p "$SDK/tools/bin"
-
-          ln -sf "$SDKMANAGER" "$SDK/tools/bin/sdkmanager"
-
-          echo "Buildozer-compatible sdkmanager:"
-          ls -l "$SDK/tools/bin/sdkmanager"
+          echo "sdkmanager:"
+          ls -l "$BUILDOZER_SDK/tools/bin/sdkmanager"
 
           echo "sdkmanager version:"
-          "$SDK/tools/bin/sdkmanager" --version
+          "$BUILDOZER_SDK/tools/bin/sdkmanager" --version
 
       - name: Accept Android licenses
         run: |
-          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          SDK="$HOME/.buildozer/android/platform/android-sdk"
 
           yes | "$SDK/tools/bin/sdkmanager" --licenses
 
       - name: Install Android SDK packages
         run: |
-          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          SDK="$HOME/.buildozer/android/platform/android-sdk"
 
           "$SDK/tools/bin/sdkmanager" \
             "platform-tools" \
@@ -111,61 +119,106 @@ jobs:
             "build-tools;35.0.0" \
             "ndk;28.2.13676358"
 
-      - name: Verify Android SDK
+      - name: Verify Buildozer Android SDK
         run: |
-          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          SDK="$HOME/.buildozer/android/platform/android-sdk"
 
-          echo "================================"
-          echo "Android SDK"
-          echo "================================"
+          echo "========================================"
+          echo "Buildozer Android SDK"
+          echo "========================================"
           echo "$SDK"
 
+          echo ""
           echo "sdkmanager:"
           "$SDK/tools/bin/sdkmanager" --version
 
-          echo "================================"
-          echo "Build Tools"
-          echo "================================"
+          echo ""
+          echo "Build Tools:"
           ls -la "$SDK/build-tools"
 
-          echo "================================"
-          echo "Android API 35"
-          echo "================================"
+          echo ""
+          echo "Android API 35:"
           test -f "$SDK/platforms/android-35/android.jar"
 
-          echo "================================"
-          echo "AIDL"
-          echo "================================"
+          echo ""
+          echo "AIDL:"
           test -x "$SDK/build-tools/35.0.0/aidl"
+          ls -l "$SDK/build-tools/35.0.0/aidl"
 
-          echo "================================"
-          echo "NDK"
-          echo "================================"
+          echo ""
+          echo "NDK:"
           test -d "$SDK/ndk/28.2.13676358"
+          ls -ld "$SDK/ndk/28.2.13676358"
 
+          echo ""
           echo "Android SDK verification successful."
 
       - name: Show build environment
         run: |
-          echo "Python:"
+          echo "========================================"
+          echo "Python"
+          echo "========================================"
           python --version
 
-          echo "pip:"
+          echo ""
+          echo "pip"
           python -m pip --version
 
-          echo "Buildozer:"
+          echo ""
+          echo "Buildozer"
           buildozer --version
 
-          echo "Cython:"
+          echo ""
+          echo "Cython"
           cython --version
 
-          echo "Java:"
+          echo ""
+          echo "Java"
           java -version
 
-      - name: Clean previous build
+      - name: Clean previous Buildozer project
         run: |
           rm -rf .buildozer
           rm -rf bin
+
+      - name: Restore Buildozer Android SDK after project clean
+        run: |
+          # Buildozer may recreate its directory after the project clean.
+          # Ensure the SDK remains available at the expected location.
+
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+          BUILDOZER_SDK="$HOME/.buildozer/android/platform/android-sdk"
+
+          mkdir -p "$HOME/.buildozer/android/platform"
+
+          if [ ! -d "$BUILDOZER_SDK/build-tools/35.0.0" ]; then
+            echo "Restoring Buildozer Android SDK..."
+
+            rm -rf "$BUILDOZER_SDK"
+            mkdir -p "$BUILDOZER_SDK"
+
+            cp -a "$SDK/." "$BUILDOZER_SDK/"
+
+            mkdir -p "$BUILDOZER_SDK/tools/bin"
+
+            SDKMANAGER=$(find "$BUILDOZER_SDK/cmdline-tools" \
+              -path '*/bin/sdkmanager' \
+              -type f | head -n 1)
+
+            if [ -z "$SDKMANAGER" ]; then
+              echo "ERROR: sdkmanager not found"
+              exit 1
+            fi
+
+            ln -sf "$SDKMANAGER" \
+              "$BUILDOZER_SDK/tools/bin/sdkmanager"
+          fi
+
+          echo "Buildozer SDK ready:"
+          ls -la "$BUILDOZER_SDK/build-tools"
+
+          echo "AIDL:"
+          ls -l "$BUILDOZER_SDK/build-tools/35.0.0/aidl"
 
       - name: Build APK
         run: |
@@ -173,6 +226,7 @@ jobs:
 
       - name: Show generated APK
         run: |
+          echo "Generated APK files:"
           ls -lah bin/
 
       - name: Upload APK
