@@ -134,7 +134,7 @@ android.logcat_filters = *:S python:D
 # ================================================================
 
 # Keep Android backup enabled.
-android.allow_backup = True
+andro
 
 
 # ================================================================
