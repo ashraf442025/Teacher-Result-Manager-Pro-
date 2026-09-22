@@ -129,7 +129,7 @@ jobs:
           yes | "$SDK/tools/bin/sdkmanager" --licenses
 
       # ------------------------------------------------------------
-      # Install Android packages
+      # Install Android SDK packages
       # ------------------------------------------------------------
       - name: Install Android SDK packages
         run: |
@@ -188,12 +188,6 @@ jobs:
 
       # ------------------------------------------------------------
       # Prepare Buildozer Android SDK
-      #
-      # Buildozer 1.5.0 expects the SDK under:
-      #
-      # ~/.buildozer/android/platform/android-sdk
-      #
-      # We copy the SDK prepared above into that location.
       # ------------------------------------------------------------
       - name: Prepare Buildozer Android SDK
         run: |
@@ -246,17 +240,6 @@ jobs:
 
       # ------------------------------------------------------------
       # Prepare patched python-for-android
-      #
-      # The latest build log showed p4a creating a temporary
-      # Python 3.14 virtual environment and upgrading pip to
-      # 26.2.1.
-      #
-      # That causes:
-      #
-      # ImportError:
-      # cannot import name 'BuildDependencyInstallError'
-      #
-      # We patch p4a so its temporary environment uses pip < 26.
       # ------------------------------------------------------------
       - name: Prepare patched python-for-android
         run: |
@@ -275,7 +258,7 @@ jobs:
           git rev-parse HEAD
 
           echo ""
-          echo "Searching for pip upgrade command..."
+          echo "Searching for pip upgrade commands..."
 
           grep -R -n \
             "pip install -U pip" \
@@ -294,25 +277,36 @@ jobs:
           echo ""
           echo "Verifying patch..."
 
+          if grep -R -n \
+            "pip install -U pip" \
+            pythonforandroid; then
+
+            echo "ERROR: Old pip upgrade command still exists!"
+            exit 1
+          fi
+
+          echo ""
+          echo "Patched pip commands:"
+
           grep -R -n \
-            "pip install -U" \
+            'pip install -U "pip<26"' \
             pythonforandroid \
             || true
 
-      # ------------------------------------------------------------
-      # Configure build environment
-      # ------------------------------------------------------------
-      - name: Configure Android build environment
-        run: |
-          echo "ANDROIDAPI=35" >> "$GITHUB_ENV"
-          echo "ANDROIDMINAPI=24" >> "$GITHUB_ENV"
+          echo ""
+          echo "p4a patch completed successfully."
 
+      # ------------------------------------------------------------
+      # Configure Buildozer environment
+      # ------------------------------------------------------------
+      - name: Configure Buildozer environment
+        run: |
           echo "ANDROIDSDK=$HOME/.buildozer/android/platform/android-sdk" >> "$GITHUB_ENV"
 
           echo "ANDROIDNDK=$HOME/.buildozer/android/platform/android-ndk-r28c" >> "$GITHUB_ENV"
 
       # ------------------------------------------------------------
-      # Show environment
+      # Show build environment
       # ------------------------------------------------------------
       - name: Show build environment
         run: |
@@ -338,14 +332,6 @@ jobs:
           java -version
 
           echo ""
-          echo "Android API:"
-          echo "$ANDROIDAPI"
-
-          echo ""
-          echo "Android Min API:"
-          echo "$ANDROIDMINAPI"
-
-          echo ""
           echo "Android SDK:"
           echo "$ANDROIDSDK"
 
@@ -365,7 +351,7 @@ jobs:
           buildozer -v android debug
 
       # ------------------------------------------------------------
-      # Show APK
+      # Show generated APK
       # ------------------------------------------------------------
       - name: Show generated APK
         run: |
