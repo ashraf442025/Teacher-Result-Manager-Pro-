@@ -188,6 +188,39 @@ jobs:
           rm -rf bin
 
           mkdir -p bin
+          - name: Check Buildozer Android configuration
+        shell: bash
+        run: |
+          set -eux
+
+          echo "===== BUILDОZER SPEC ====="
+          grep -E "android.api|android.minapi|android.ndk|android.archs|requirements|p4a." buildozer.spec || true
+
+          echo "===== ANDROID VARIABLES ====="
+          echo "ANDROIDSDK=$ANDROIDSDK"
+          echo "ANDROIDNDK=$ANDROIDNDK"
+          echo "ANDROIDAPI=$ANDROIDAPI"
+          echo "ANDROIDMINAPI=$ANDROIDMINAPI"
+
+          echo "===== SDK ====="
+          ls -lah "$ANDROID_HOME" || true
+
+          echo "===== NDK ====="
+          ls -lah "$ANDROID_HOME/ndk" || true
+          ls -lah "$HOME/.buildozer/android/platform" || true
+
+          echo "===== BUILDOZER ====="
+          buildozer --version
+
+          echo "===== P4A ====="
+          test -f python-for-android/pythonforandroid/toolchain.py
+          echo "LOCAL P4A FOUND"
+
+          echo "===== PROJECT ====="
+          test -f main.py
+          test -f buildozer.spec
+          echo "main.py FOUND"
+          echo "buildozer.spec FOUND"
 
 
       # ============================================================
