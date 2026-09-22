@@ -1,7 +1,7 @@
 [app]
 
-title = Bangla Scientific Calculator
-package.name = banglascientificcalculator
+title = Teacher Result Manager
+package.name = teacherresultmanager
 package.domain = org.example
 
 source.dir = .
