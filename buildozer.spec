@@ -1,10 +1,13 @@
 [app]
 
 title = Teacher Result Manager
+
 package.name = teacherresultmanager
+
 package.domain = org.example
 
 source.dir = .
+
 source.include_exts = py,kv,png,jpg,jpeg,ttf
 
 version = 1.0
