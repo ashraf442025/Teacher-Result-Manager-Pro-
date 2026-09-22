@@ -1,56 +1,31 @@
-name: Teacher Result Manager Pro - Android APK
+name: Build Bangla Scientific Calculator APK
 
 on:
   workflow_dispatch:
-
   push:
     branches:
       - main
 
 jobs:
-
   build:
-
-    name: Build Teacher Result Manager Pro APK
-
     runs-on: ubuntu-22.04
 
     steps:
-
-      # ============================================================
-      # 1. CHECKOUT
-      # ============================================================
-
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
-
-
-      # ============================================================
-      # 2. PYTHON 3.12
-      # ============================================================
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.11"
 
-
-      # ============================================================
-      # 3. JAVA 17
-      # ============================================================
-
-      - name: Setup Java 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
 
-
-      # ============================================================
-      # 4. SYSTEM DEPENDENCIES
-      # ============================================================
-
-      - name: Install System Dependencies
+      - name: Install system dependencies
         run: |
           sudo apt-get update
 
@@ -58,220 +33,113 @@ jobs:
             git \
             zip \
             unzip \
-            openjdk-17-jdk \
-            python3-pip \
-            python3-venv \
+            wget \
             autoconf \
             automake \
-            autopoint \
             libtool \
-            libltdl-dev \
             pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo5 \
             cmake \
             libffi-dev \
             libssl-dev \
-            gettext \
-            lbzip2 \
-            ccache \
-            patch \
-            make \
-            gcc \
-            g++
-
-
-      # ============================================================
-      # 5. VERIFY PYTHON
-      # ============================================================
-
-      - name: Verify Python
-        run: |
-          python --version
-          python -m pip --version
-
-
-      # ============================================================
-      # 6. VERIFY JAVA
-      # ============================================================
-
-      - name: Verify Java
-        run: |
-          java -version
-          javac -version
-
-
-      # ============================================================
-      # 7. UPGRADE PIP
-      # ============================================================
-
-      - name: Upgrade pip
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade setuptools wheel
-
-
-      # ============================================================
-      # 8. INSTALL CYTHON
-      # ============================================================
-
-      - name: Install Cython
-        run: |
-          python -m pip install "Cython==0.29.34"
-
-
-      # ============================================================
-      # 9. INSTALL BUILDOZER
-      # ============================================================
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libltdl-dev
 
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade buildozer
+          python -m pip install "pip==24.0"
+          python -m pip install "buildozer==1.5.0"
+          python -m pip install "cython==0.29.34"
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
 
-      # ============================================================
-      # 10. CHECK PROJECT FILES
-      # ============================================================
-
-      - name: Check Project Files
+      - name: Fix Buildozer SDK manager path
         run: |
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
 
-          echo "=========================================="
-          echo "TEACHER RESULT MANAGER PRO"
-          echo "=========================================="
+          echo "Android SDK: $SDK"
 
-          echo ""
-          echo "Current directory:"
-          pwd
+          echo "Finding sdkmanager..."
+          find "$SDK/cmdline-tools" -name sdkmanager -type f -print
 
-          echo ""
-          echo "Project files:"
-          ls -la
+          SDKMANAGER=$(find "$SDK/cmdline-tools" -name sdkmanager -type f | head -n 1)
 
-          echo ""
-          echo "Checking main.py..."
-          test -f main.py
-          echo "main.py: OK"
-
-          echo ""
-          echo "Checking buildozer.spec..."
-          test -f buildozer.spec
-          echo "buildozer.spec: OK"
-
-
-      # ============================================================
-      # 11. SHOW BUILDOZER CONFIG
-      # ============================================================
-
-      - name: Show Buildozer Configuration
-        run: |
-
-          echo "=========================================="
-          echo "BUILDOZER CONFIG"
-          echo "=========================================="
-
-          grep -E \
-          "title|package.name|package.domain|source.main|version|requirements|orientation|android.api|android.minapi|android.ndk|android.archs|p4a.bootstrap|p4a.branch" \
-          buildozer.spec || true
-
-
-      # ============================================================
-      # 12. CLEAN OLD BUILD
-      # ============================================================
-
-      - name: Clean Build
-        run: |
-
-          rm -rf .buildozer
-          rm -rf bin
-
-          mkdir -p bin
-          - name: Check Buildozer Android configuration
-        shell: bash
-        run: |
-          set -eux
-
-          echo "===== BUILDОZER SPEC ====="
-          grep -E "android.api|android.minapi|android.ndk|android.archs|requirements|p4a." buildozer.spec || true
-
-          echo "===== ANDROID VARIABLES ====="
-          echo "ANDROIDSDK=$ANDROIDSDK"
-          echo "ANDROIDNDK=$ANDROIDNDK"
-          echo "ANDROIDAPI=$ANDROIDAPI"
-          echo "ANDROIDMINAPI=$ANDROIDMINAPI"
-
-          echo "===== SDK ====="
-          ls -lah "$ANDROID_HOME" || true
-
-          echo "===== NDK ====="
-          ls -lah "$ANDROID_HOME/ndk" || true
-          ls -lah "$HOME/.buildozer/android/platform" || true
-
-          echo "===== BUILDOZER ====="
-          buildozer --version
-
-          echo "===== P4A ====="
-          test -f python-for-android/pythonforandroid/toolchain.py
-          echo "LOCAL P4A FOUND"
-
-          echo "===== PROJECT ====="
-          test -f main.py
-          test -f buildozer.spec
-          echo "main.py FOUND"
-          echo "buildozer.spec FOUND"
-
-
-      # ============================================================
-      # 13. BUILD APK
-      # ============================================================
-
-      - name: Build Debug APK
-        env:
-          PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
-          PIP_NO_INPUT: "1"
-
-        run: |
-
-          buildozer -v android debug
-
-
-      # ============================================================
-      # 14. VERIFY APK
-      # ============================================================
-
-      - name: Verify APK
-        run: |
-
-          echo "=========================================="
-          echo "CHECKING APK"
-          echo "=========================================="
-
-          find bin -maxdepth 1 -type f -name "*.apk" -print
-
-          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
-
-          if [ "$APK_COUNT" -eq 0 ]; then
-            echo "ERROR: APK was not created."
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager not found"
             exit 1
           fi
 
-          echo ""
-          echo "APK CREATED SUCCESSFULLY!"
-          echo ""
+          echo "Found sdkmanager: $SDKMANAGER"
 
-          ls -lh bin/*.apk
+          mkdir -p "$SDK/tools/bin"
 
+          ln -sf "$SDKMANAGER" "$SDK/tools/bin/sdkmanager"
 
-      # ============================================================
-      # 15. UPLOAD APK
-      # ============================================================
+          echo "Testing sdkmanager:"
+          "$SDK/tools/bin/sdkmanager" --version
+
+      - name: Accept Android licenses
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+
+          yes | "$SDK/tools/bin/sdkmanager" --licenses
+
+      - name: Install Android packages
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+
+          "$SDK/tools/bin/sdkmanager" \
+            "platform-tools" \
+            "platforms;android-35" \
+            "build-tools;35.0.0" \
+            "ndk;28.2.13676358"
+
+      - name: Verify Android SDK
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
+
+          echo "SDK:"
+          echo "$SDK"
+
+          echo "SDK manager:"
+          "$SDK/tools/bin/sdkmanager" --version
+
+          echo "Build Tools:"
+          ls -la "$SDK/build-tools"
+
+          echo "Android API:"
+          test -f "$SDK/platforms/android-35/android.jar"
+
+          echo "AIDL:"
+          test -x "$SDK/build-tools/35.0.0/aidl"
+
+          echo "NDK:"
+          test -d "$SDK/ndk/28.2.13676358"
+
+          echo "Android SDK verification successful."
+
+      - name: Show environment
+        run: |
+          python --version
+          python -m pip --version
+          buildozer --version
+          cython --version
+          java -version
+
+      - name: Clean previous build
+        run: |
+          rm -rf .buildozer
+          rm -rf bin
+
+      - name: Build APK
+        run: |
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
-
         with:
-          name: Teacher-Result-Manager-Pro-APK
+          name: Bangla-Scientific-Calculator-APK
           path: bin/*.apk
           if-no-files-found: error
