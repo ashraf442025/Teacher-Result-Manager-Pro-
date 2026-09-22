@@ -3,7 +3,6 @@
 title = Teacher Result Manager
 
 package.name = teacherresultmanager
-
 package.domain = org.example
 
 source.dir = .
@@ -31,3 +30,5 @@ android.api = 35
 android.minapi = 24
 android.ndk = 28c
 android.accept_sdk_license = True
+
+p4a.source_dir = /home/runner/python-for-android
