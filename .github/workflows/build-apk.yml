@@ -1,4 +1,4 @@
-name: Build Bangla Scientific Calculator APK
+name: Build Teacher Result Manager APK
 
 on:
   workflow_dispatch:
@@ -36,9 +36,15 @@ jobs:
             wget \
             autoconf \
             automake \
+            autopoint \
             libtool \
             pkg-config \
             cmake \
+            g++ \
+            gcc \
+            make \
+            patch \
+            lbzip2 \
             libffi-dev \
             libssl-dev \
             zlib1g-dev \
@@ -46,38 +52,47 @@ jobs:
             libncursesw5-dev \
             libltdl-dev
 
-      - name: Install Buildozer
+      - name: Install Python build tools
         run: |
-          python -m pip install "pip==24.0"
+          python -m pip install --upgrade "pip==24.0"
           python -m pip install "buildozer==1.5.0"
           python -m pip install "cython==0.29.34"
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
 
+      # Buildozer 1.5.0 expects the legacy SDK path:
+      # $ANDROID_SDK_ROOT/tools/bin/sdkmanager
+      # setup-android installs it under cmdline-tools.
       - name: Fix Buildozer SDK manager path
         run: |
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
 
           echo "Android SDK: $SDK"
 
-          echo "Finding sdkmanager..."
-          find "$SDK/cmdline-tools" -name sdkmanager -type f -print
+          echo "Searching for sdkmanager..."
 
-          SDKMANAGER=$(find "$SDK/cmdline-tools" -name sdkmanager -type f | head -n 1)
+          SDKMANAGER=$(find "$SDK/cmdline-tools" \
+            -path '*/bin/sdkmanager' \
+            -type f | head -n 1)
 
           if [ -z "$SDKMANAGER" ]; then
-            echo "ERROR: sdkmanager not found"
+            echo "ERROR: sdkmanager was not found"
+            find "$SDK/cmdline-tools" -maxdepth 5 -type f | head -100
             exit 1
           fi
 
-          echo "Found sdkmanager: $SDKMANAGER"
+          echo "Found sdkmanager:"
+          echo "$SDKMANAGER"
 
           mkdir -p "$SDK/tools/bin"
 
           ln -sf "$SDKMANAGER" "$SDK/tools/bin/sdkmanager"
 
-          echo "Testing sdkmanager:"
+          echo "Buildozer-compatible sdkmanager:"
+          ls -l "$SDK/tools/bin/sdkmanager"
+
+          echo "sdkmanager version:"
           "$SDK/tools/bin/sdkmanager" --version
 
       - name: Accept Android licenses
@@ -86,7 +101,7 @@ jobs:
 
           yes | "$SDK/tools/bin/sdkmanager" --licenses
 
-      - name: Install Android packages
+      - name: Install Android SDK packages
         run: |
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
 
@@ -100,32 +115,51 @@ jobs:
         run: |
           SDK="${ANDROID_SDK_ROOT:-${ANDROID_HOME}}"
 
-          echo "SDK:"
+          echo "================================"
+          echo "Android SDK"
+          echo "================================"
           echo "$SDK"
 
-          echo "SDK manager:"
+          echo "sdkmanager:"
           "$SDK/tools/bin/sdkmanager" --version
 
-          echo "Build Tools:"
+          echo "================================"
+          echo "Build Tools"
+          echo "================================"
           ls -la "$SDK/build-tools"
 
-          echo "Android API:"
+          echo "================================"
+          echo "Android API 35"
+          echo "================================"
           test -f "$SDK/platforms/android-35/android.jar"
 
-          echo "AIDL:"
+          echo "================================"
+          echo "AIDL"
+          echo "================================"
           test -x "$SDK/build-tools/35.0.0/aidl"
 
-          echo "NDK:"
+          echo "================================"
+          echo "NDK"
+          echo "================================"
           test -d "$SDK/ndk/28.2.13676358"
 
           echo "Android SDK verification successful."
 
-      - name: Show environment
+      - name: Show build environment
         run: |
+          echo "Python:"
           python --version
+
+          echo "pip:"
           python -m pip --version
+
+          echo "Buildozer:"
           buildozer --version
+
+          echo "Cython:"
           cython --version
+
+          echo "Java:"
           java -version
 
       - name: Clean previous build
@@ -135,11 +169,15 @@ jobs:
 
       - name: Build APK
         run: |
-          buildozer android debug
+          buildozer -v android debug
+
+      - name: Show generated APK
+        run: |
+          ls -lah bin/
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Bangla-Scientific-Calculator-APK
+          name: Teacher-Result-Manager-APK
           path: bin/*.apk
           if-no-files-found: error
