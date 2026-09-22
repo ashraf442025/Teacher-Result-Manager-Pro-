@@ -7,7 +7,6 @@ on:
     branches:
       - main
 
-
 jobs:
 
   build:
@@ -19,7 +18,7 @@ jobs:
     steps:
 
       # ============================================================
-      # CHECKOUT
+      # 1. CHECKOUT
       # ============================================================
 
       - name: Checkout Repository
@@ -27,18 +26,17 @@ jobs:
 
 
       # ============================================================
-      # PYTHON 3.12
+      # 2. PYTHON 3.12
       # ============================================================
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: "pip"
 
 
       # ============================================================
-      # JAVA 17
+      # 3. JAVA 17
       # ============================================================
 
       - name: Setup Java 17
@@ -49,12 +47,11 @@ jobs:
 
 
       # ============================================================
-      # SYSTEM DEPENDENCIES
+      # 4. SYSTEM DEPENDENCIES
       # ============================================================
 
-      - name: Install Linux Dependencies
+      - name: Install System Dependencies
         run: |
-
           sudo apt-get update
 
           sudo apt-get install -y \
@@ -87,62 +84,58 @@ jobs:
 
 
       # ============================================================
-      # VERIFY JAVA
-      # ============================================================
-
-      - name: Verify Java
-        run: |
-
-          echo "Java version:"
-          java -version
-
-          echo ""
-          echo "Javac version:"
-          javac -version
-
-
-      # ============================================================
-      # VERIFY PYTHON
+      # 5. VERIFY PYTHON
       # ============================================================
 
       - name: Verify Python
         run: |
-
           python --version
-
           python -m pip --version
 
 
       # ============================================================
-      # UPGRADE PYTHON BUILD TOOLS
+      # 6. VERIFY JAVA
       # ============================================================
 
-      - name: Install Python Build Tools
+      - name: Verify Java
         run: |
-
-          python -m pip install --upgrade pip
-
-          python -m pip install \
-            setuptools \
-            wheel \
-            "Cython==0.29.34"
+          java -version
+          javac -version
 
 
       # ============================================================
-      # INSTALL BUILDOZER
+      # 7. UPGRADE PIP
+      # ============================================================
+
+      - name: Upgrade pip
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade setuptools wheel
+
+
+      # ============================================================
+      # 8. INSTALL CYTHON
+      # ============================================================
+
+      - name: Install Cython
+        run: |
+          python -m pip install "Cython==0.29.34"
+
+
+      # ============================================================
+      # 9. INSTALL BUILDOZER
       # ============================================================
 
       - name: Install Buildozer
         run: |
-
           python -m pip install --upgrade buildozer
 
 
       # ============================================================
-      # VERIFY PROJECT
+      # 10. CHECK PROJECT FILES
       # ============================================================
 
-      - name: Verify Project Files
+      - name: Check Project Files
         run: |
 
           echo "=========================================="
@@ -150,44 +143,33 @@ jobs:
           echo "=========================================="
 
           echo ""
-          echo "Repository:"
+          echo "Current directory:"
           pwd
 
           echo ""
-          echo "Files:"
+          echo "Project files:"
           ls -la
 
           echo ""
           echo "Checking main.py..."
-
           test -f main.py
-
-          echo "main.py OK"
+          echo "main.py: OK"
 
           echo ""
           echo "Checking buildozer.spec..."
-
           test -f buildozer.spec
-
-          echo "buildozer.spec OK"
-
-          echo ""
-          echo "Checking workflow..."
-
-          test -f .github/workflows/build-apk.yml
-
-          echo "workflow OK"
+          echo "buildozer.spec: OK"
 
 
       # ============================================================
-      # SHOW BUILDOZER CONFIG
+      # 11. SHOW BUILDOZER CONFIG
       # ============================================================
 
-      - name: Show Build Configuration
+      - name: Show Buildozer Configuration
         run: |
 
           echo "=========================================="
-          echo "BUILDOZER CONFIGURATION"
+          echo "BUILDOZER CONFIG"
           echo "=========================================="
 
           grep -E \
@@ -196,10 +178,10 @@ jobs:
 
 
       # ============================================================
-      # CLEAN OLD BUILD
+      # 12. CLEAN OLD BUILD
       # ============================================================
 
-      - name: Clean Previous Build
+      - name: Clean Build
         run: |
 
           rm -rf .buildozer
@@ -209,7 +191,7 @@ jobs:
 
 
       # ============================================================
-      # BUILD APK
+      # 13. BUILD APK
       # ============================================================
 
       - name: Build Debug APK
@@ -223,14 +205,14 @@ jobs:
 
 
       # ============================================================
-      # CHECK APK
+      # 14. VERIFY APK
       # ============================================================
 
       - name: Verify APK
         run: |
 
           echo "=========================================="
-          echo "APK OUTPUT"
+          echo "CHECKING APK"
           echo "=========================================="
 
           find bin -maxdepth 1 -type f -name "*.apk" -print
@@ -243,21 +225,20 @@ jobs:
           fi
 
           echo ""
-          echo "APK successfully created."
+          echo "APK CREATED SUCCESSFULLY!"
+          echo ""
 
           ls -lh bin/*.apk
 
 
       # ============================================================
-      # UPLOAD APK
+      # 15. UPLOAD APK
       # ============================================================
 
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
 
         with:
           name: Teacher-Result-Manager-Pro-APK
-
           path: bin/*.apk
-
           if-no-files-found: error
