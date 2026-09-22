@@ -1,111 +1,263 @@
-[app]
+name: Teacher Result Manager Pro - Android APK
 
-# ================================================================
-# APPLICATION
-# ================================================================
+on:
+  workflow_dispatch:
 
-title = Teacher Result Manager Pro
-
-package.name = teacherresultmanager
-
-package.domain = org.teacherresultmanager
-
-version = 1.0.0
+  push:
+    branches:
+      - main
 
 
-# ================================================================
-# SOURCE
-# ================================================================
+jobs:
 
-source.dir = .
+  build:
 
-source.main = main.py
+    name: Build Teacher Result Manager Pro APK
 
-source.include_exts = py,png,jpg,jpeg,kv,atlas,ttf,otf,json,txt,xml
+    runs-on: ubuntu-22.04
 
+    steps:
 
-# ================================================================
-# REQUIREMENTS
-# ================================================================
+      # ============================================================
+      # CHECKOUT
+      # ============================================================
 
-requirements = python3,kivy,kivymd,pyjnius,reportlab,pillow
-
-
-# ================================================================
-# DISPLAY
-# ================================================================
-
-orientation = portrait
-
-fullscreen = 0
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
 
-# ================================================================
-# ANDROID API
-# ================================================================
+      # ============================================================
+      # PYTHON 3.12
+      # ============================================================
 
-android.api = 35
-
-android.minapi = 24
-
-
-# ================================================================
-# ANDROID NDK
-# ================================================================
-
-android.ndk = 28c
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
 
 
-# ================================================================
-# ARCHITECTURE
-# ================================================================
+      # ============================================================
+      # JAVA 17
+      # ============================================================
 
-android.archs = arm64-v8a
-
-
-# ================================================================
-# ANDROID PERMISSIONS
-# ================================================================
-
-android.permissions = INTERNET
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
 
 
-# ================================================================
-# ANDROIDX
-# ================================================================
+      # ============================================================
+      # SYSTEM DEPENDENCIES
+      # ============================================================
 
-android.enable_androidx = True
+      - name: Install Linux Dependencies
+        run: |
+
+          sudo apt-get update
+
+          sudo apt-get install -y \
+            git \
+            zip \
+            unzip \
+            openjdk-17-jdk \
+            python3-pip \
+            python3-venv \
+            autoconf \
+            automake \
+            autopoint \
+            libtool \
+            libltdl-dev \
+            pkg-config \
+            zlib1g-dev \
+            libncurses5-dev \
+            libncursesw5-dev \
+            libtinfo5 \
+            cmake \
+            libffi-dev \
+            libssl-dev \
+            gettext \
+            lbzip2 \
+            ccache \
+            patch \
+            make \
+            gcc \
+            g++
 
 
-# ================================================================
-# ANDROID BACKUP
-# ================================================================
+      # ============================================================
+      # VERIFY JAVA
+      # ============================================================
 
-android.allow_backup = True
+      - name: Verify Java
+        run: |
 
+          echo "Java version:"
+          java -version
 
-# ================================================================
-# APK / AAB
-# ================================================================
-
-android.debug_artifact = apk
-
-android.release_artifact = aab
-
-
-# ================================================================
-# PYTHON-FOR-ANDROID
-# ================================================================
-
-p4a.fork = kivy
-
-p4a.branch = develop
-
-p4a.bootstrap = sdl2
+          echo ""
+          echo "Javac version:"
+          javac -version
 
 
-# ================================================================
-# LOGGING
-# ================================================================
+      # ============================================================
+      # VERIFY PYTHON
+      # ============================================================
 
-log_level = 2
+      - name: Verify Python
+        run: |
+
+          python --version
+
+          python -m pip --version
+
+
+      # ============================================================
+      # UPGRADE PYTHON BUILD TOOLS
+      # ============================================================
+
+      - name: Install Python Build Tools
+        run: |
+
+          python -m pip install --upgrade pip
+
+          python -m pip install \
+            setuptools \
+            wheel \
+            "Cython==0.29.34"
+
+
+      # ============================================================
+      # INSTALL BUILDOZER
+      # ============================================================
+
+      - name: Install Buildozer
+        run: |
+
+          python -m pip install --upgrade buildozer
+
+
+      # ============================================================
+      # VERIFY PROJECT
+      # ============================================================
+
+      - name: Verify Project Files
+        run: |
+
+          echo "=========================================="
+          echo "TEACHER RESULT MANAGER PRO"
+          echo "=========================================="
+
+          echo ""
+          echo "Repository:"
+          pwd
+
+          echo ""
+          echo "Files:"
+          ls -la
+
+          echo ""
+          echo "Checking main.py..."
+
+          test -f main.py
+
+          echo "main.py OK"
+
+          echo ""
+          echo "Checking buildozer.spec..."
+
+          test -f buildozer.spec
+
+          echo "buildozer.spec OK"
+
+          echo ""
+          echo "Checking workflow..."
+
+          test -f .github/workflows/build-apk.yml
+
+          echo "workflow OK"
+
+
+      # ============================================================
+      # SHOW BUILDOZER CONFIG
+      # ============================================================
+
+      - name: Show Build Configuration
+        run: |
+
+          echo "=========================================="
+          echo "BUILDOZER CONFIGURATION"
+          echo "=========================================="
+
+          grep -E \
+          "title|package.name|package.domain|source.main|version|requirements|orientation|android.api|android.minapi|android.ndk|android.archs|p4a.bootstrap|p4a.branch" \
+          buildozer.spec || true
+
+
+      # ============================================================
+      # CLEAN OLD BUILD
+      # ============================================================
+
+      - name: Clean Previous Build
+        run: |
+
+          rm -rf .buildozer
+          rm -rf bin
+
+          mkdir -p bin
+
+
+      # ============================================================
+      # BUILD APK
+      # ============================================================
+
+      - name: Build Debug APK
+        env:
+          PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
+          PIP_NO_INPUT: "1"
+
+        run: |
+
+          buildozer -v android debug
+
+
+      # ============================================================
+      # CHECK APK
+      # ============================================================
+
+      - name: Verify APK
+        run: |
+
+          echo "=========================================="
+          echo "APK OUTPUT"
+          echo "=========================================="
+
+          find bin -maxdepth 1 -type f -name "*.apk" -print
+
+          APK_COUNT=$(find bin -maxdepth 1 -type f -name "*.apk" | wc -l)
+
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "ERROR: APK was not created."
+            exit 1
+          fi
+
+          echo ""
+          echo "APK successfully created."
+
+          ls -lh bin/*.apk
+
+
+      # ============================================================
+      # UPLOAD APK
+      # ============================================================
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+
+        with:
+          name: Teacher-Result-Manager-Pro-APK
+
+          path: bin/*.apk
+
+          if-no-files-found: error
